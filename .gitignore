@@ -1,0 +1,10 @@
+/nbproject/
+.idea
+*.log
+*.css.map
+!.gitkeep
+.env
+.svn
+.vscode
+.git
+certs/
