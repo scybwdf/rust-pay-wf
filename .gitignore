@@ -7,5 +7,6 @@
 .svn
 .vscode
 .git
+.DS_Store
 certs/
 target/
