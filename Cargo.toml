@@ -3,6 +3,10 @@
 name = "rust-pay-wf"
 version = "0.1.0"
 edition = "2021"
+authors = ["felix <scybwf@qq.com>"]
+description = "A brief description of your crate."
+license = "MIT OR Apache-2.0"
+keywords = ["keyword1", "keyword2"]
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
