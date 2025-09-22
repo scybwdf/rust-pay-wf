@@ -1,3 +1,4 @@
+use std::thread::sleep;
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::{engine::general_purpose, Engine as _};
@@ -5,7 +6,6 @@ use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer};
 use rand::Rng;
 use std::time::Duration;
 use time::OffsetDateTime;
-use tokio::time::sleep;
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
     (0..len)
@@ -76,7 +76,7 @@ where
                 if attempts == 0 {
                     return Err(e);
                 }
-                sleep(Duration::from_millis(delay)).await;
+                sleep(Duration::from_millis(delay));
                 delay = std::cmp::min(delay * 2, 5000);
             }
         }
