@@ -997,7 +997,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-pay-wf"
+name = "rust_pay_wf"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",

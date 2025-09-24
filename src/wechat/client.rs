@@ -20,7 +20,7 @@ pub struct WechatClient {
 impl WechatClient {
     pub fn with_mode(cfg: Arc<WechatConfig>, mode: Mode) -> Self {
         let http = Client::builder()
-            .user_agent("ysp-rust-pay/0.1")
+            .user_agent("rust_pay_wf/0.1")
             .build()
             .expect("client");
         let certs = Arc::new(PlatformCerts::new(cfg.clone()));
