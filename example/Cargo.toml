@@ -7,4 +7,4 @@ publish = false
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = "0.8.4"
-rust_pay_wf = { version = "0.1.0" }
+rust_pay_wf_core = { version = "0.1.0" }
