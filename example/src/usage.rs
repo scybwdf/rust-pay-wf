@@ -9,6 +9,7 @@ async fn main() -> anyhow::Result<()> {
     let wx = Arc::new(WechatConfig {
         mchid: "your_mchid".into(),
         serial_no: "your_serial".into(),
+        sp_appid: Some("wx_sp_appid".into()),
         private_key_pem: include_str!("../certs/wechat_apiclient_key.pem").to_string(),
         api_v3_key: "32_byte_api_v3_key_here___________".into(),
         platform_public_key_pem: include_str!("../certs/wechat_platform_pub.pem").to_string(),

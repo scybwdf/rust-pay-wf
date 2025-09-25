@@ -15,6 +15,8 @@ pub struct WechatConfig {
     pub appid_mp: Option<String>,
     pub appid_mini: Option<String>,
     pub appid_app: Option<String>,
+    
+    pub sp_appid: Option<String>,
     pub sub_mchid: Option<String>,
     pub sub_appid: Option<String>,
 }
