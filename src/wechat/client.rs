@@ -61,9 +61,15 @@ impl WechatClient {
     // 构建服务商模式参数
     fn build_service_params(&self, mut params: Value) -> Value {
         if let Mode::Service = self.mode {
+            // 设置appid
+            if !params.get("appid").is_some() && !params.get("sp_appid").is_some() {
+                if let Some(appid) = &self.cfg.appid {
+                    params["sp_appid"] = json!(appid.clone());
+                }
+            }
             // 添加服务商模式必需参数
             if !params.get("sp_appid").is_some() {
-                if let Some(sp_appid) = &self.cfg.sp_appid {
+                if let Some(sp_appid) = &self.cfg.appid {
                     params["sp_appid"] = json!(sp_appid.clone());
                 } else if let Some(appid) = &self.cfg.appid_mp {
                     params["sp_appid"] = json!(appid.clone());
@@ -81,29 +87,40 @@ impl WechatClient {
             }
 
             // 处理payer字段
-            if let Some(payer) = params.get_mut("payer") {
+            if let Some(payer) = params.clone().get_mut("payer") {
                 if let Value::Object(payer_obj) = payer {
                     // 服务商模式下使用sub_openid而不是openid
-                    if let Some(openid) = payer_obj.remove("openid") {
-                        payer_obj.insert("sub_openid".to_string(), openid);
+                    if params.get("sub_appid").is_some() {
+                        if let Some(openid) = payer_obj.remove("openid") {
+                            payer_obj.insert("sub_openid".to_string(), openid);
+                        }
+                    }else {
+                        if let Some(openid) = payer_obj.remove("openid") {
+                            payer_obj.insert("sp_openid".to_string(), openid);
+                        }
                     }
+
                 }
             }
+        }else {
+            params["mchid"] = json!(self.cfg.mchid.clone());
+            params["appid"] = json!(self.cfg.appid.clone());
         }
+
         params
     }
 
     pub async fn mp(&self, mut order: Value) -> Result<Value, PayError> {
-        // 设置appid
-        if !order.get("appid").is_some() && !order.get("sp_appid").is_some() {
-            if let Some(appid) = &self.cfg.appid_mp {
-                if let Mode::Service = self.mode {
-                    order["sp_appid"] = json!(appid.clone());
-                } else {
-                    order["appid"] = json!(appid.clone());
+
+        if let Mode::Service = self.mode {
+            if !order.get("sub_appid").is_some() {
+                if let Some(appid) = &self.cfg.appid_mp {
+                    order["sub_appid"] = json!(appid.clone());
                 }
             }
         }
+
+
 
         // 构建符合服务商模式的参数
         order = self.build_service_params(order);
@@ -116,16 +133,6 @@ impl WechatClient {
             "amount": order.get("amount").cloned().unwrap_or(json!({"total":1})),
         });*/
         let mut body=order.clone();
-
-        // 根据模式添加不同的商户ID
-        if let Mode::Service = self.mode {
-            body["sp_mchid"] = json!(self.cfg.mchid.clone());
-            if let Some(sub_mchid) = order.get("sub_mchid") {
-                body["sub_mchid"] = sub_mchid.clone();
-            }
-        } else {
-            body["mchid"] = json!(self.cfg.mchid.clone());
-        }
 
         // 添加payer信息
         if let Some(payer) = order.get("payer") {
@@ -179,13 +186,10 @@ impl WechatClient {
     }
 
     pub async fn mini(&self, mut order: Value) -> Result<Value, PayError> {
-        // 设置appid
-        if !order.get("appid").is_some() && !order.get("sp_appid").is_some() {
-            if let Some(appid) = &self.cfg.appid_mini {
-                if let Mode::Service = self.mode {
-                    order["sp_appid"] = json!(appid.clone());
-                } else {
-                    order["appid"] = json!(appid.clone());
+        if let Mode::Service = self.mode {
+            if !order.get("sub_appid").is_some() {
+                if let Some(appid) = &self.cfg.appid_mini {
+                    order["sub_appid"] = json!(appid.clone());
                 }
             }
         }
@@ -235,6 +239,13 @@ impl WechatClient {
     }
 
     pub async fn h5(&self, mut order: Value) -> Result<Value, PayError> {
+        if let Mode::Service = self.mode {
+            if !order.get("sub_appid").is_some() {
+                if let Some(appid) = &self.cfg.appid_mini {
+                    order["sub_appid"] = json!(appid.clone());
+                }
+            }
+        }
         // 构建符合服务商模式的参数
         order = self.build_service_params(order);
 
@@ -245,13 +256,11 @@ impl WechatClient {
     }
 
     pub async fn app(&self, mut order: Value) -> Result<Value, PayError> {
-        // 设置appid
-        if !order.get("appid").is_some() && !order.get("sp_appid").is_some() {
-            if let Some(appid) = &self.cfg.appid_app {
-                if let Mode::Service = self.mode {
-                    order["sp_appid"] = json!(appid.clone());
-                } else {
-                    order["appid"] = json!(appid.clone());
+
+        if let Mode::Service = self.mode {
+            if !order.get("sub_appid").is_some() {
+                if let Some(appid) = &self.cfg.appid_app {
+                    order["sub_appid"] = json!(appid.clone());
                 }
             }
         }

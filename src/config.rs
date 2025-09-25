@@ -8,6 +8,7 @@ pub enum Mode {
 #[derive(Clone)]
 pub struct WechatConfig {
     pub mchid: String,
+    pub appid: Option<String>,//主商户appid，服务号
     pub serial_no: String,
     pub private_key_pem: String,
     pub api_v3_key: String,
@@ -15,8 +16,6 @@ pub struct WechatConfig {
     pub appid_mp: Option<String>,
     pub appid_mini: Option<String>,
     pub appid_app: Option<String>,
-    
-    pub sp_appid: Option<String>,
     pub sub_mchid: Option<String>,
     pub sub_appid: Option<String>,
 }
