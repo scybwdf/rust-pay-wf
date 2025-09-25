@@ -1,9 +1,9 @@
 use serde_json::json;
 use std::sync::Arc;
-use rust_pay_wf_core::config::{
+use rust_pay_wf::config::{
     AlipayConfig, Mode, PayConfig, UnionpayConfig, WechatConfig,
 };
-use rust_pay_wf_core::Pay;
+use rust_pay_wf::Pay;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let wx = Arc::new(WechatConfig {

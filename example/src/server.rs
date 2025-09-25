@@ -2,9 +2,9 @@ use axum::{body::Bytes, extract::Form, http::HeaderMap, routing::post, Json, Rou
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use rust_pay_wf_core::{Pay, PayError};
-use rust_pay_wf_core::alipay::AlipayNotify;
-use rust_pay_wf_core::config::{AlipayConfig, Mode, PayConfig, WechatConfig};
+use rust_pay_wf::{Pay, PayError};
+use rust_pay_wf::alipay::AlipayNotify;
+use rust_pay_wf::config::{AlipayConfig, Mode, PayConfig, WechatConfig};
 
 // Example for handling Alipay notify: Axum Form extractor will parse application/x-www-form-urlencoded into a map
 #[derive(serde::Deserialize)]

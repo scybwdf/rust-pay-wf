@@ -85,12 +85,12 @@ impl WechatClient {
                     params["sub_mchid"] = json!(sub_mchid.clone());
                 }
             }
-
+            let old_params=params.clone();
             // 处理payer字段
-            if let Some(payer) = params.clone().get_mut("payer") {
+            if let Some(payer) = params.get_mut("payer") {
                 if let Value::Object(payer_obj) = payer {
                     // 服务商模式下使用sub_openid而不是openid
-                    if params.get("sub_appid").is_some() {
+                    if old_params.get("sub_appid").is_some() {
                         if let Some(openid) = payer_obj.remove("openid") {
                             payer_obj.insert("sub_openid".to_string(), openid);
                         }
