@@ -109,12 +109,13 @@ impl WechatClient {
         order = self.build_service_params(order);
 
         // 构建请求体
-        let mut body = json!({
+       /* let mut body = json!({
             "description": order.get("description").and_then(|v| v.as_str()).unwrap_or(""),
             "out_trade_no": order.get("out_trade_no").and_then(|v| v.as_str()).unwrap_or(""),
             "notify_url": order.get("notify_url").and_then(|v| v.as_str()).unwrap_or(""),
             "amount": order.get("amount").cloned().unwrap_or(json!({"total":1})),
-        });
+        });*/
+        let mut body=order.clone();
 
         // 根据模式添加不同的商户ID
         if let Mode::Service = self.mode {
