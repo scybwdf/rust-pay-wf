@@ -49,9 +49,10 @@ impl WechatClient {
         if let Mode::Service = self.mode {
             // 服务商模式URL前缀为/partner
             if path.contains("/v3/pay/transactions/") {
-                return path.replace("/v3/pay/transactions/", "/v3/pay/partner/transactions/");
+                let path=path.replace("/v3/pay/transactions/", "/v3/pay/partner/transactions/");
+                return self.endpoint(&path);
             }
-            path.to_string()
+            return self.endpoint(path);
         } else {
             self.endpoint(path)
         }
