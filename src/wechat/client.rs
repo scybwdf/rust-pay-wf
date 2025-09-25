@@ -406,6 +406,7 @@ impl WechatClient {
         } else {
             body.to_string()
         };
+        println!("sign_and_post: method={}, url={}, body={}", method, url, body_str);
         let timestamp = now_ts();
         let nonce = gen_nonce(32);
         let parsed = Url::parse(url).map_err(|e| PayError::Other(format!("parse url: {}", e)))?;
