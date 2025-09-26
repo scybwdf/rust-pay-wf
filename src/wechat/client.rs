@@ -147,7 +147,7 @@ impl WechatClient {
         // 使用服务商模式URL
         let url = self.get_service_url("/v3/pay/transactions/jsapi");
         let resp = self.sign_and_post("POST", &url, &body).await?;
-
+         println!("res:: {:?}",resp);
         if let Some(prepay_id) = resp.get("prepay_id").and_then(|v| v.as_str()) {
             let time_stamp = now_ts();
             let nonce_str = gen_nonce(32);
