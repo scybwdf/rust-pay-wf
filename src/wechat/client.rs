@@ -165,7 +165,7 @@ impl WechatClient {
         Ok(resp)
     }
 
-    pub async fn mini(&self, mut order: Value) -> Result<Value, PayError> {
+    pub async fn miniapp(&self, mut order: Value) -> Result<Value, PayError> {
         if let Mode::Service = self.mode {
             if !order.get("sub_appid").is_some() {
                 if let Some(appid) = &self.cfg.appid_mini {
