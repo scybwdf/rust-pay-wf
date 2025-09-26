@@ -125,29 +125,9 @@ impl WechatClient {
         // 构建符合服务商模式的参数
         order = self.build_service_params(order);
 
-        // 构建请求体
-       /* let mut body = json!({
-            "description": order.get("description").and_then(|v| v.as_str()).unwrap_or(""),
-            "out_trade_no": order.get("out_trade_no").and_then(|v| v.as_str()).unwrap_or(""),
-            "notify_url": order.get("notify_url").and_then(|v| v.as_str()).unwrap_or(""),
-            "amount": order.get("amount").cloned().unwrap_or(json!({"total":1})),
-        });*/
-        let mut body=order.clone();
-
-        // 添加payer信息
-        if let Some(payer) = order.get("payer") {
-            body["payer"] = payer.clone();
-        }
-
-        // 添加场景信息
-        if let Some(scene_info) = order.get("scene_info") {
-            body["scene_info"] = scene_info.clone();
-        }
-
         // 使用服务商模式URL
         let url = self.get_service_url("/v3/pay/transactions/jsapi");
-        let resp = self.sign_and_post("POST", &url, &body).await?;
-         println!("res:: {:?}",resp);
+        let resp = self.sign_and_post("POST", &url, &order).await?;
         if let Some(prepay_id) = resp.get("prepay_id").and_then(|v| v.as_str()) {
             let time_stamp = now_ts();
             let nonce_str = gen_nonce(32);
@@ -155,9 +135,9 @@ impl WechatClient {
 
             // 根据模式确定appid
             let appid = if let Mode::Service = self.mode {
-                resp.get("sp_appid").and_then(|v| v.as_str()).unwrap_or("")
+                order.get("sp_appid").and_then(|v| v.as_str()).unwrap_or("")
             } else {
-                resp.get("appid").and_then(|v| v.as_str()).unwrap_or("")
+                order.get("appid").and_then(|v| v.as_str()).unwrap_or("")
             };
 
             let sign_src = format!(
@@ -208,9 +188,9 @@ impl WechatClient {
 
             // 根据模式确定appid
             let appid = if let Mode::Service = self.mode {
-                resp.get("sp_appid").and_then(|v| v.as_str()).unwrap_or("")
+                order.get("sp_appid").and_then(|v| v.as_str()).unwrap_or("")
             } else {
-                resp.get("appid").and_then(|v| v.as_str()).unwrap_or("")
+                order.get("appid").and_then(|v| v.as_str()).unwrap_or("")
             };
 
             let sign_src = format!(
