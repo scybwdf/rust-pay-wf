@@ -17,7 +17,7 @@ pub struct WechatConfig {
     pub appid_mini: Option<String>,
     pub appid_app: Option<String>,
     pub sub_mchid: Option<String>,
-    pub sub_appid: Option<String>,
+    pub notify_url: Option<String>,
 }
 #[derive(Clone)]
 pub struct AlipayConfig {
@@ -28,6 +28,7 @@ pub struct AlipayConfig {
     pub charset: String,
     pub sign_type: String,
     pub sub_merchant_id: Option<String>,
+    pub notify_url: Option<String>,
 }
 #[derive(Clone)]
 pub struct UnionpayConfig {

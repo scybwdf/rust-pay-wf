@@ -108,7 +108,11 @@ impl WechatClient {
             params["mchid"] = json!(self.cfg.mchid.clone());
             params["appid"] = json!(self.cfg.appid.clone());
         }
-
+        if !params.get("notify_url").is_some() {
+            if let Some(notify_url) = &self.cfg.notify_url {
+                params["notify_url"] = json!(notify_url.clone());
+            }
+        }
         params
     }
 
