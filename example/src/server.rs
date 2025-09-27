@@ -69,6 +69,40 @@ async fn notify_wechat(headers: HeaderMap, body: Bytes) -> Json<serde_json::Valu
             hm.insert(k.as_str().to_string(), s.to_string());
         }
     }
+    let wx = Arc::new(WechatConfig {
+        mchid: "your_mchid".into(),
+        serial_no: "your_serial".into(),
+        sp_appid: Some("wx_sp_appid".into()),
+        private_key_pem: include_str!("../certs/wechat_apiclient_key.pem").to_string(),
+        api_v3_key: "32_byte_api_v3_key_here___________".into(),
+        platform_public_key_pem: include_str!("../certs/wechat_platform_pub.pem").to_string(),
+        appid_mp: Some("wx_mp_appid".into()),
+        appid_mini: Some("wx_miniprogram_appid".into()),
+        appid_app: Some("wx_app_appid".into()),
+        sub_mchid: Some("your_sub_mchid".into()),
+        sub_appid: Some("your_sub_appid".into()),
+    });
+    let ali = Arc::new(AlipayConfig {
+        app_id: "your_alipay_appid".into(),
+        gateway: "https://openapi.alipay.com/gateway.do".into(),
+        private_key_pem: include_str!("../certs/alipay_private.pem").to_string(),
+        alipay_public_key_pem: include_str!("../certs/alipay_public.pem").to_string(),
+        charset: "utf-8".into(),
+        sign_type: "RSA2".into(),
+        sub_merchant_id: Some("your_sub_merchant_id".into()),
+    });
+    let cfg = PayConfig {
+        mode: Mode::Service,
+        wechat: Some(wx),
+        alipay: Some(ali),
+        unionpay: None,
+    };
+    Pay::config(cfg);
+    match Pay::wechat().handle_notify(headers, &body).await {
+        Ok(json) => HttpResponse::Ok().body("{\"code\":\"SUCCESS\"}"),
+        Err(_) => HttpResponse::BadRequest().body("{\"code\":\"FAIL\"}")
+    }
+
     Json(json!({"received": body_str, "headers": hm}))
 }
 

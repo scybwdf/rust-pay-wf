@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::config::{Mode, WechatConfig};
 use crate::errors::PayError;
 use crate::utils::{gen_nonce, now_ts, rsa_sign_sha256_pem};
@@ -6,6 +7,7 @@ use reqwest::Client;
 use serde_json::{json, Value};
 use std::sync::Arc;
 use url::Url;
+use crate::wechat::notify::WechatNotify;
 
 pub struct WechatClient {
     cfg: Arc<WechatConfig>,
@@ -459,6 +461,13 @@ impl WechatClient {
                 e
             )))?;
         Ok(v)
+    }
+
+    /// 处理回调
+    pub async fn handle_notify(&self, headers: HashMap<String,String>, body: &[u8]) -> Result<Value, PayError> {
+        let body_str = std::str::from_utf8(body).map_err(|e| PayError::Other(format!("invalid utf8: {}", e)))?;
+        let notify = WechatNotify::new(self.cfg.clone(), self.certs.clone());
+        notify.verify_and_decrypt(&headers, body_str)
     }
 
 }
