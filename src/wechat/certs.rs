@@ -1,5 +1,7 @@
 use crate::config::WechatConfig;
-use crate::utils::{aes_gcm_decrypt, gen_nonce, now_ts, retry_async, rsa_sign_sha256_pem};
+use crate::utils::{
+    aes_gcm_decrypt, extract_pubkey_from_cert, gen_nonce, now_ts, retry_async, rsa_sign_sha256_pem,
+};
 use reqwest::Client;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -62,7 +64,8 @@ impl PlatformCerts {
                         .and_then(|c| c.as_str())
                         .unwrap_or("");
                     let pem = aes_gcm_decrypt(&self.cfg.api_v3_key, aad, nonce_r, cipher)?;
-                    m.insert(serial.as_str().unwrap_or_default().to_string(), pem);
+                    let pub_pem = extract_pubkey_from_cert(&pem)?; // 提取公钥
+                    m.insert(serial.as_str().unwrap_or_default().to_string(), pub_pem);
                 }
             }
         }

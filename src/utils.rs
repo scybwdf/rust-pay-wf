@@ -2,7 +2,7 @@ use std::thread::sleep;
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::{engine::general_purpose, Engine as _};
-use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer};
+use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer,x509::X509};
 use rand::Rng;
 use std::time::Duration;
 use time::OffsetDateTime;
@@ -81,4 +81,12 @@ where
             }
         }
     }
+}
+
+
+pub fn extract_pubkey_from_cert(cert_pem: &str) -> anyhow::Result<String> {
+    let cert = X509::from_pem(cert_pem.as_bytes())?;
+    let pubkey: PKey<openssl::pkey::Public> = cert.public_key()?;
+    let pub_pem = pubkey.public_key_to_pem()?;
+    Ok(String::from_utf8(pub_pem)?)
 }
