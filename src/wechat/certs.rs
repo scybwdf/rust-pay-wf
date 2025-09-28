@@ -42,6 +42,8 @@ impl PlatformCerts {
             let r = client
                 .get(url)
                 .header("Authorization", auth.clone())
+                .header("Accept", "application/json")
+                .header("User-Agent", "rust_pay_wf")
                 .send()
                 .await?;
             Ok::<String, reqwest::Error>(r.text().await?)
