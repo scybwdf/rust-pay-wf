@@ -19,19 +19,19 @@ impl WechatNotify {
     ) -> Result<serde_json::Value, PayError> {
         println!("headers: {:?}", headers);
         let ts = headers
-            .get("Wechatpay-Timestamp")
+            .get("wechatpay-timestamp")
             .map(String::as_str)
             .unwrap_or("");
         let nonce = headers
-            .get("Wechatpay-Nonce")
+            .get("wechatpay-nonce")
             .map(String::as_str)
             .unwrap_or("");
         let signature = headers
-            .get("Wechatpay-Signature")
+            .get("wechatpay-signature")
             .map(String::as_str)
             .unwrap_or("");
         let serial = headers
-            .get("Wechatpay-Serial")
+            .get("wechatpay-serial")
             .map(String::as_str)
             .unwrap_or("");
         let msg = format!("{}\n{}\n{}\n", ts, nonce, body);
