@@ -35,19 +35,18 @@ impl WechatNotify {
             .map(String::as_str)
             .unwrap_or("");
         let msg = format!("{}\n{}\n{}\n", ts, nonce, body);
-   /*     let pub_pem = self
-            .certs
-            .get_by_serial(serial)
-            .ok_or(PayError::Other(format!(
-                "platform cert {} not found",
-                serial
-            )))?;*/
-        let mut pub_pem = String::new();
-        if let Some(get_pub_pem) = self.certs.get_by_serial(serial) {
-            pub_pem = get_pub_pem;
-        }else{
-            pub_pem=self.cfg.platform_public_key_pem.clone().unwrap_or_default();
-        }
+        /*     let pub_pem = self
+        .certs
+        .get_by_serial(serial)
+        .ok_or(PayError::Other(format!(
+            "platform cert {} not found",
+            serial
+        )))?;*/
+        let pub_pem = if let Some(get_pub_pem) = self.certs.get_by_serial(serial) {
+            get_pub_pem
+        } else {
+            self.cfg.platform_public_key_pem.clone().unwrap_or_default()
+        };
         println!("pub_pem: {:?}", pub_pem);
         if pub_pem.is_empty() {
             return Err(PayError::Other(
