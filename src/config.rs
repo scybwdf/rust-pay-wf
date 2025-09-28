@@ -12,7 +12,7 @@ pub struct WechatConfig {
     pub serial_no: String,
     pub private_key_pem: String,
     pub api_v3_key: String,
-    pub platform_public_key_pem: String,
+    pub platform_public_key_pem: Option<String>,
     pub appid_mp: Option<String>,
     pub appid_mini: Option<String>,
     pub appid_app: Option<String>,

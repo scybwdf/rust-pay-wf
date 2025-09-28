@@ -1,13 +1,13 @@
 
 [package]
 name = "rust_pay_wf"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 authors = ["felix <scybwf@qq.com>"]
 description = "Rust 微信、支付宝、银联支付SDK"  # 必须有 description
 repository = "https://github.com/scybwdf/rust-pay-wf"  # 推荐
 license = "MIT OR Apache-2.0"
-keywords = ["keyword1", "keyword2"]
+keywords = ["wechat", "alipay", "pay", "unionpay"]
 
 
 [dependencies]

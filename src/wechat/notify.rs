@@ -17,6 +17,7 @@ impl WechatNotify {
         headers: &HashMap<String, String>,
         body: &str,
     ) -> Result<serde_json::Value, PayError> {
+        println!("headers: {:?}", headers);
         let ts = headers
             .get("Wechatpay-Timestamp")
             .map(String::as_str)
@@ -34,13 +35,25 @@ impl WechatNotify {
             .map(String::as_str)
             .unwrap_or("");
         let msg = format!("{}\n{}\n{}\n", ts, nonce, body);
-        let pub_pem = self
+   /*     let pub_pem = self
             .certs
             .get_by_serial(serial)
             .ok_or(PayError::Other(format!(
                 "platform cert {} not found",
                 serial
-            )))?;
+            )))?;*/
+        let mut pub_pem = String::new();
+        if let Some(get_pub_pem) = self.certs.get_by_serial(serial) {
+            pub_pem = get_pub_pem;
+        }else{
+            pub_pem=self.cfg.platform_public_key_pem.clone().unwrap_or_default();
+        }
+        println!("pub_pem: {:?}", pub_pem);
+        if pub_pem.is_empty() {
+            return Err(PayError::Other(
+                "wechat notify platform public key empty".to_string(),
+            ));
+        }
         let ok = rsa_verify_sha256_pem(&pub_pem, &msg, signature)
             .map_err(|e| PayError::Crypto(format!("{}", e)))?;
         if !ok {
