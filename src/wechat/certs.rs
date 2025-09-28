@@ -47,6 +47,7 @@ impl PlatformCerts {
             Ok::<String, reqwest::Error>(r.text().await?)
         })
         .await?;
+        println!("[refresh]  body={}", txt);
         let v: Value = serde_json::from_str(&txt)?;
         if let Some(arr) = v.get("data").and_then(|d| d.as_array()) {
             let mut m = self.map.lock().unwrap();
