@@ -50,6 +50,7 @@ impl PlatformCerts {
         let v: Value = serde_json::from_str(&txt)?;
         if let Some(arr) = v.get("data").and_then(|d| d.as_array()) {
             let mut m = self.map.lock().unwrap();
+            m.clear();
             for cert in arr {
                 if let (Some(serial), Some(resource)) =
                     (cert.get("serial_no"), cert.get("encrypt_certificate"))
@@ -65,6 +66,7 @@ impl PlatformCerts {
                         .unwrap_or("");
                     let pem = aes_gcm_decrypt(&self.cfg.api_v3_key, aad, nonce_r, cipher)?;
                     let pub_pem = extract_pubkey_from_cert(&pem)?; // 提取公钥
+                    println!("[refresh] store cert serial={} pub_pem={}", serial.as_str().unwrap_or_default().to_string(), pub_pem);
                     m.insert(serial.as_str().unwrap_or_default().to_string(), pub_pem);
                 }
             }
