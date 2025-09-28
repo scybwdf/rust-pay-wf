@@ -470,7 +470,7 @@ impl WechatClient {
     /// 处理回调
     pub async fn handle_notify(&self, headers: HashMap<String,String>, body_str: &str) -> Result<Value, PayError> {
         let notify = WechatNotify::new(self.cfg.clone(), self.certs.clone());
-        notify.verify_and_decrypt(&headers, body_str)
+        notify.verify_and_decrypt(&headers, body_str).await
     }
 
 }

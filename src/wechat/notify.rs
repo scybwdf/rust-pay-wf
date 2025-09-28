@@ -12,7 +12,7 @@ impl WechatNotify {
     pub fn new(cfg: Arc<WechatConfig>, certs: Arc<PlatformCerts>) -> Self {
         Self { cfg, certs }
     }
-    pub fn verify_and_decrypt(
+    pub async fn verify_and_decrypt(
         &self,
         headers: &HashMap<String, String>,
         body: &str,
@@ -35,18 +35,20 @@ impl WechatNotify {
             .map(String::as_str)
             .unwrap_or("");
         let msg = format!("{}\n{}\n{}\n", ts, nonce, body);
-        /*     let pub_pem = self
-        .certs
-        .get_by_serial(serial)
-        .ok_or(PayError::Other(format!(
-            "platform cert {} not found",
-            serial
-        )))?;*/
-        let pub_pem = if let Some(get_pub_pem) = self.certs.get_by_serial(serial) {
-            get_pub_pem
-        } else {
-            self.cfg.platform_public_key_pem.clone().unwrap_or_default()
-        };
+        // 1️⃣ 优先从缓存拿
+        let mut pub_pem = self.certs.get_by_serial(serial);
+
+        // 2️⃣ 如果没有，就尝试 refresh 一次再取
+        if pub_pem.is_none() {
+            if let Err(e) = self.certs.refresh().await {
+                return Err(PayError::Crypto(format!("refresh certs failed: {}", e)));
+            }
+            pub_pem = self.certs.get_by_serial(serial);
+        }
+        // 3️⃣ 还是没有，就报错
+        let pub_pem = pub_pem.ok_or_else(|| {
+            PayError::Other(format!("platform cert {} not found after refresh", serial))
+        })?;
         println!("pub_pem: {:?}", pub_pem);
         if pub_pem.is_empty() {
             return Err(PayError::Other(
