@@ -341,6 +341,10 @@ impl WechatClient {
             "/v3/refund/domestic/refunds"
         };
         let url = self.endpoint(&url);
+        if let Some(obj) = order.as_object_mut() {
+            obj.remove("sub_appid");
+            obj.remove("sp_mchid");
+        }
         let resp = self.sign_and_post("POST", &url, &order).await?;
         Ok(resp)
     }
@@ -366,6 +370,10 @@ impl WechatClient {
                 )
         };
         let url = self.endpoint(&url);
+        if let Some(obj) = params.as_object_mut() {
+            obj.remove("sub_appid");
+            obj.remove("sp_mchid");
+        }
         let resp = self.sign_and_post("GET", &url, &params).await?;
         Ok(resp)
     }
