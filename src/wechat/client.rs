@@ -300,7 +300,7 @@ impl WechatClient {
                              .unwrap_or("")
                 )
         };
-
+        let url = self.endpoint(&url);
         let resp = self.sign_and_post("GET", &url, &params).await?;
         Ok(resp)
     }
@@ -325,7 +325,7 @@ impl WechatClient {
                              .unwrap_or("")
                 )
         };
-
+        let url = self.endpoint(&url);
         let resp = self.sign_and_post("POST", &url, &params).await?;
         Ok(resp)
     }
@@ -340,7 +340,7 @@ impl WechatClient {
         } else {
             "/v3/refund/domestic/refunds"
         };
-
+        let url = self.endpoint(&url);
         let resp = self.sign_and_post("POST", &url, &order).await?;
         Ok(resp)
     }
@@ -365,19 +365,22 @@ impl WechatClient {
                              .unwrap_or("")
                 )
         };
-
+        let url = self.endpoint(&url);
         let resp = self.sign_and_post("GET", &url, &params).await?;
         Ok(resp)
     }
 
-    pub async fn transfer(&self, order: Value) -> Result<Value, PayError> {
+    pub async fn transfer(&self, mut order: Value) -> Result<Value, PayError> {
+        // 构建符合服务商模式的参数
+        order = self.build_service_params(order);
+
         // 使用服务商模式URL
         let url = if let Mode::Service = self.mode {
             "/v3/transfer/batches"
         } else {
             "/v3/transfer/batches"
         };
-
+        let url = self.endpoint(&url);
         let resp = self.sign_and_post("POST", &url, &order).await?;
         Ok(resp)
     }
