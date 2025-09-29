@@ -344,6 +344,7 @@ impl WechatClient {
         if let Some(obj) = order.as_object_mut() {
             obj.remove("sub_appid");
             obj.remove("sp_mchid");
+            obj.remove("sp_appid");
         }
         let resp = self.sign_and_post("POST", &url, &order).await?;
         Ok(resp)
@@ -373,6 +374,7 @@ impl WechatClient {
         if let Some(obj) = params.as_object_mut() {
             obj.remove("sub_appid");
             obj.remove("sp_mchid");
+            obj.remove("sp_appid");
         }
         let resp = self.sign_and_post("GET", &url, &params).await?;
         Ok(resp)
