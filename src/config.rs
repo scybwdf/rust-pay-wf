@@ -27,8 +27,10 @@ pub struct AlipayConfig {
     pub alipay_public_key_pem: String,
     pub charset: String,
     pub sign_type: String,
-    pub sub_merchant_id: Option<String>,
     pub notify_url: Option<String>,
+    // 服务商模式专用配置
+    pub sys_service_provider_id: Option<String>,  // 服务商ID
+    pub app_auth_token: Option<String>,          // 应用授权令牌
 }
 #[derive(Clone)]
 pub struct UnionpayConfig {

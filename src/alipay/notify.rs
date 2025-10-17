@@ -13,8 +13,6 @@ pub struct AlipayNotifyData {
     pub trade_status: String,
     pub total_amount: String,
     pub seller_id: Option<String>,
-    pub sub_merchant_id: Option<String>,
-    // keep other parameters if needed
     #[serde(flatten)]
     pub others: HashMap<String, String>,
 }
@@ -72,8 +70,6 @@ impl AlipayNotify {
         let trade_status = params.get("trade_status").cloned().unwrap_or_default();
         let total_amount = params.get("total_amount").cloned().unwrap_or_default();
         let seller_id = params.get("seller_id").cloned();
-        let sub_merchant_id = params.get("sub_merchant_id").cloned();
-
         // business status check per Alipay doc: treat TRADE_SUCCESS or TRADE_FINISHED as success
         if trade_status != "TRADE_SUCCESS" && trade_status != "TRADE_FINISHED" {
             return Err(PayError::Other(format!(
@@ -83,7 +79,7 @@ impl AlipayNotify {
         }
 
         // service mode extra check: if configured, ensure notify contains expected sub_merchant_id (if exists)
-        if let crate::config::Mode::Service = self.mode {
+/*        if let crate::config::Mode::Service = self.mode {
             if let Some(cfg_sub) = &self.cfg.sub_merchant_id {
                 if let Some(notify_sub) = &sub_merchant_id {
                     if notify_sub != cfg_sub {
@@ -94,7 +90,7 @@ impl AlipayNotify {
                     }
                 }
             }
-        }
+        }*/
 
         // collect other params
         let mut others = HashMap::new();
@@ -111,7 +107,6 @@ impl AlipayNotify {
             trade_status,
             total_amount,
             seller_id,
-            sub_merchant_id,
             others,
         })
     }

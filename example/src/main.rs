@@ -31,7 +31,9 @@ async fn notify_alipay(Form(map): Form<std::collections::HashMap<String, String>
         alipay_public_key_pem: include_str!("../certs/alipay_public.pem").to_string(),
         charset: "utf-8".into(),
         sign_type: "RSA2".into(),
-        sub_merchant_id: Some("your_sub_merchant_id".into()),
+        // 服务商模式专用配置
+        sys_service_provider_id: Some("your_sys_service_provider_id".into()),  // 服务商ID
+        app_auth_token: Some("your_app_auth_token".into()),          // 应用授权令牌
     });
     let cfg = PayConfig {
         mode: Mode::Service,
