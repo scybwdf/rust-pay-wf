@@ -19,13 +19,11 @@ pub struct AlipayNotifyData {
 
 pub struct AlipayNotify {
     cfg: Arc<AlipayConfig>,
-    #[warn(dead_code)]
-    mode: crate::config::Mode,
 }
 
 impl AlipayNotify {
-    pub fn new(cfg: Arc<AlipayConfig>, mode: crate::config::Mode) -> Self {
-        Self { cfg, mode }
+    pub fn new(cfg: Arc<AlipayConfig>) -> Self {
+        Self { cfg }
     }
 
     /// Verify Alipay notify parameters (form-encoded -> HashMap)

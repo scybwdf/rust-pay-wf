@@ -272,7 +272,7 @@ impl AlipayClient {
         &self,
         params: &std::collections::HashMap<String, String>,
     ) -> Result<crate::alipay::notify::AlipayNotifyData, crate::errors::PayError> {
-        let notify = crate::alipay::notify::AlipayNotify::new(self.cfg.clone(), self.mode.clone());
+        let notify = crate::alipay::notify::AlipayNotify::new(self.cfg.clone());
         notify.verify_notify(params)
     }
 }
