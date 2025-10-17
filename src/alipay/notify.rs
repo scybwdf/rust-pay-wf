@@ -19,6 +19,7 @@ pub struct AlipayNotifyData {
 
 pub struct AlipayNotify {
     cfg: Arc<AlipayConfig>,
+    #[warn(dead_code)]
     mode: crate::config::Mode,
 }
 
