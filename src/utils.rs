@@ -6,6 +6,9 @@ use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer,x509::X509};
 use rand::Rng;
 use std::time::Duration;
 use time::OffsetDateTime;
+use std::fs;
+use std::error::Error;
+
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
     (0..len)
@@ -89,4 +92,86 @@ pub fn extract_pubkey_from_cert(cert_pem: &str) -> anyhow::Result<String> {
     let pubkey: PKey<openssl::pkey::Public> = cert.public_key()?;
     let pub_pem = pubkey.public_key_to_pem()?;
     Ok(String::from_utf8(pub_pem)?)
+}
+
+/// 从证书文件提取 SN（失败返回空字符串）
+pub fn get_cert_sn(cert_path: &str) -> String {
+    let data = match fs::read(cert_path) {
+        Ok(d) => d,
+        Err(_) => return "".to_string(),
+    };
+
+    let cert = match X509::from_pem(&data) {
+        Ok(c) => c,
+        Err(_) => return "".to_string(),
+    };
+
+    let issuer = cert
+        .issuer_name()
+        .entries()
+        .map(|e| {
+            let key = e.object().nid().short_name().unwrap_or("");
+            let val = e.data().as_utf8().ok().map(|s| s.to_string()).unwrap_or_default();
+            format!("{}={}", key, val)
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let sn_hex = match cert.serial_number().to_bn().and_then(|bn| bn.to_hex_str()) {
+        Ok(s) => s.to_string(),
+        Err(_) => return "".to_string(),
+    };
+
+    let raw = format!("{}{}", issuer, sn_hex);
+    format!("{:x}", md5::compute(raw))
+}
+
+/// 从根证书文件计算 root_sn（失败返回空字符串）
+pub fn get_root_cert_sn(root_path: &str) -> String {
+    let text = match fs::read_to_string(root_path) {
+        Ok(t) => t,
+        Err(_) => return "".to_string(),
+    };
+
+    let mut sns = vec![];
+
+    for block in text.split("-----END CERTIFICATE-----") {
+        if block.contains("-----BEGIN CERTIFICATE-----") {
+            let cert_data = format!("{}-----END CERTIFICATE-----", block);
+            let cert = match X509::from_pem(cert_data.as_bytes()) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+
+            let alg = cert.signature_algorithm().object().nid().short_name().unwrap_or("");
+            if !(alg.contains("sha1") || alg.contains("sha256")) {
+                continue;
+            }
+
+            let issuer = cert
+                .issuer_name()
+                .entries()
+                .map(|e| {
+                    let key = e.object().nid().short_name().unwrap_or("");
+                    let val = e.data().as_utf8().ok().map(|s| s.to_string()).unwrap_or_default();
+                    format!("{}={}", key, val)
+                })
+                .collect::<Vec<_>>()
+                .join(",");
+
+            let sn_hex = match cert.serial_number().to_bn().and_then(|bn| bn.to_hex_str()) {
+                Ok(s) => s.to_string(),
+                Err(_) => continue,
+            };
+
+            let raw = format!("{}{}", issuer, sn_hex);
+            sns.push(format!("{:x}", md5::compute(raw)));
+        }
+    }
+
+    if sns.is_empty() {
+        "".to_string()
+    } else {
+        sns.join("_")
+    }
 }

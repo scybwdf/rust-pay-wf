@@ -1,8 +1,9 @@
-use crate::config::AlipayConfig;
+use crate::config::{AlipayConfig, Mode};
 use crate::errors::PayError;
-use crate::utils::rsa_verify_sha256_pem;
+use crate::utils::{rsa_verify_sha256_pem};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,7 +14,6 @@ pub struct AlipayNotifyData {
     pub trade_status: String,
     pub total_amount: String,
     pub seller_id: Option<String>,
-    #[serde(flatten)]
     pub others: HashMap<String, String>,
 }
 
@@ -26,21 +26,18 @@ impl AlipayNotify {
         Self { cfg }
     }
 
-    /// Verify Alipay notify parameters (form-encoded -> HashMap)
-    /// Steps:
-    /// 1. Extract sign and sign_type
-    /// 2. Build pre-sign string by sorting params excluding sign & sign_type, joining k=v with &
-    /// 3. Verify using RSA2 with alipay public key (sandbox/public as mode requires)
-    /// 4. Validate trade_status and sub_merchant_id if service mode configured
+    /// Verify Alipay notify parameters
     pub fn verify_notify(
         &self,
         params: &HashMap<String, String>,
     ) -> Result<AlipayNotifyData, PayError> {
+        // ---- Step 1. 提取 sign 和 sign_type ----
         let sign = params
             .get("sign")
-            .ok_or(PayError::Other("missing sign".to_string()))?;
-        // sign_type may be optional but typically present
-        // Build pre-sign string
+            .ok_or_else(|| PayError::Other("missing sign".to_string()))?;
+        let sign_type = params.get("sign_type").cloned().unwrap_or_default();
+
+        // ---- Step 2. 构造待签名字符串 ----
         let mut kv: Vec<(&String, &String)> = params
             .iter()
             .filter(|&(k, _)| k != "sign" && k != "sign_type")
@@ -52,24 +49,40 @@ impl AlipayNotify {
             .collect::<Vec<String>>()
             .join("&");
 
-        // Choose public key: sandbox or normal config (here we assume cfg.alipay_public_key_pem works for both if set by user)
-        let pubkey = &self.cfg.alipay_public_key_pem;
-        let verified = rsa_verify_sha256_pem(pubkey, &content, sign)
-            .map_err(|e| PayError::Crypto(format!("rsa verify error: {}", e)))?;
-        if !verified {
-            return Err(PayError::Other(
-                "alipay notify signature invalid".to_string(),
-            ));
+        // ---- Step 3. 选择验签公钥 ----
+        let mut pubkey_pem = String::new();
+
+        // 1) 证书模式优先（推荐生产使用）
+        if let Some(cert_path) = &self.cfg.alipay_cert_path {
+            if let Ok(pem) = fs::read_to_string(cert_path) {
+                pubkey_pem = pem;
+            }
+        }
+        // 2) 如果没配置证书，则使用公钥字符串模式
+        if pubkey_pem.is_empty() {
+            pubkey_pem = self.cfg.alipay_public_key.clone().unwrap_or_default();
         }
 
-        // Extract fields and build data
+        if pubkey_pem.is_empty() {
+            return Err(PayError::Other("missing alipay public key".into()));
+        }
+
+        // ---- Step 4. 验签 ----
+        let verified = rsa_verify_sha256_pem(&pubkey_pem, &content, sign)
+            .map_err(|e| PayError::Crypto(format!("rsa verify error: {}", e)))?;
+        if !verified {
+            return Err(PayError::Other("alipay notify signature invalid".into()));
+        }
+
+        // ---- Step 5. 核心字段解析 ----
         let app_id = params.get("app_id").cloned().unwrap_or_default();
         let out_trade_no = params.get("out_trade_no").cloned().unwrap_or_default();
         let trade_no = params.get("trade_no").cloned().unwrap_or_default();
         let trade_status = params.get("trade_status").cloned().unwrap_or_default();
         let total_amount = params.get("total_amount").cloned().unwrap_or_default();
         let seller_id = params.get("seller_id").cloned();
-        // business status check per Alipay doc: treat TRADE_SUCCESS or TRADE_FINISHED as success
+
+        // ---- Step 6. 检查交易状态 ----
         if trade_status != "TRADE_SUCCESS" && trade_status != "TRADE_FINISHED" {
             return Err(PayError::Other(format!(
                 "trade_status not success: {}",
@@ -77,23 +90,23 @@ impl AlipayNotify {
             )));
         }
 
-        // service mode extra check: if configured, ensure notify contains expected sub_merchant_id (if exists)
-/*        if let crate::config::Mode::Service = self.mode {
-            if let Some(cfg_sub) = &self.cfg.sub_merchant_id {
-                if let Some(notify_sub) = &sub_merchant_id {
-                    if notify_sub != cfg_sub {
+        // ---- Step 7. 服务商模式检查 ----
+ /*       if let Mode::Service = self.cfg.mode {
+            if let Some(cfg_pid) = &self.cfg.sub_merchant_id {
+                if let Some(notify_pid) = params.get("sub_merchant_id") {
+                    if notify_pid != cfg_pid {
                         return Err(PayError::Other(format!(
-                            "sub_merchant_id mismatch notify={} cfg={}",
-                            notify_sub, cfg_sub
+                            "sub_merchant_id mismatch: notify={}, cfg={}",
+                            notify_pid, cfg_pid
                         )));
                     }
                 }
             }
         }*/
 
-        // collect other params
+        // ---- Step 8. 收集剩余字段 ----
         let mut others = HashMap::new();
-        for (k, v) in params.iter() {
+        for (k, v) in params {
             if k != "sign" && k != "sign_type" {
                 others.insert(k.clone(), v.clone());
             }
@@ -110,7 +123,7 @@ impl AlipayNotify {
         })
     }
 
-    /// success response body to reply to Alipay
+    /// 成功响应内容
     pub fn success_response(&self) -> &'static str {
         "success"
     }

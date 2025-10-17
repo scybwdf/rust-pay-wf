@@ -22,15 +22,23 @@ pub struct WechatConfig {
 #[derive(Clone)]
 pub struct AlipayConfig {
     pub app_id: String,
-    pub gateway: String,
     pub private_key_pem: String,
-    pub alipay_public_key_pem: String,
+
+    // 公钥模式
+    pub alipay_public_key: Option<String>,
+
+    // 证书模式
+    pub app_cert_path: Option<String>,
+    pub alipay_cert_path: Option<String>,
+    pub alipay_root_cert_path: Option<String>,
+
     pub charset: String,
     pub sign_type: String,
-    pub notify_url: Option<String>,
-    // 服务商模式专用配置
-    pub sys_service_provider_id: Option<String>,  // 服务商ID
-    pub app_auth_token: Option<String>,          // 应用授权令牌
+    pub gateway: String,
+
+    // 服务商配置
+    pub app_auth_token: Option<String>,
+    pub sys_service_provider_id: Option<String>,
 }
 #[derive(Clone)]
 pub struct UnionpayConfig {

@@ -696,6 +696,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34080505efa8e45a4b816c349525ebe327ceaa8559756f0356cba97ef3bf7432"
 
 [[package]]
+name = "md5"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae960838283323069879657ca3de837e9f7bbb4c7bf6ea7f1b290d5e9476d2e0"
+
+[[package]]
 name = "memchr"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -998,12 +1004,13 @@ dependencies = [
 
 [[package]]
 name = "rust_pay_wf"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "aes-gcm",
  "anyhow",
  "base64",
  "chrono",
+ "md5",
  "once_cell",
  "openssl",
  "rand",
