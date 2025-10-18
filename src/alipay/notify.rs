@@ -1,4 +1,4 @@
-use crate::config::{AlipayConfig, Mode};
+use crate::config::{AlipayConfig};
 use crate::errors::PayError;
 use crate::utils::{rsa_verify_sha256_pem};
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ impl AlipayNotify {
         let sign = params
             .get("sign")
             .ok_or_else(|| PayError::Other("missing sign".to_string()))?;
-        let sign_type = params.get("sign_type").cloned().unwrap_or_default();
+       // let sign_type = params.get("sign_type").cloned().unwrap_or_default();
 
         // ---- Step 2. 构造待签名字符串 ----
         let mut kv: Vec<(&String, &String)> = params

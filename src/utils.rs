@@ -7,7 +7,6 @@ use rand::Rng;
 use std::time::Duration;
 use time::OffsetDateTime;
 use std::fs;
-use std::error::Error;
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
