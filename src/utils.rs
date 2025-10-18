@@ -10,8 +10,6 @@ use std::io::Read;
 use std::path::Path;
 use openssl::hash::hash;
 use openssl::nid::Nid;
-use time::OffsetDateTime;
-use x509_parser::prelude::*;
 
 
 pub fn gen_nonce(len: usize) -> String {
@@ -24,7 +22,7 @@ pub fn gen_nonce(len: usize) -> String {
         .collect()
 }
 pub fn now_ts() -> String {
-    OffsetDateTime::now_utc().unix_timestamp().to_string()
+    ::time::OffsetDateTime::now_utc().unix_timestamp().to_string()
 }
 pub fn rsa_sign_sha256_pem(private_key_pem: &str, data: &str) -> anyhow::Result<String> {
     let private_key_pem = load_private_key(private_key_pem);
