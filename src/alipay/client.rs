@@ -1,11 +1,11 @@
+use crate::alipay::{AlipayNotify, AlipayNotifyData};
 use crate::config::{AlipayConfig, Mode};
 use crate::errors::PayError;
-use crate::utils::{rsa_sign_sha256_pem, get_cert_sn, get_root_cert_sn};
+use crate::utils::{get_cert_sn, get_root_cert_sn, rsa_sign_sha256_pem};
 use reqwest::Client;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use urlencoding::encode;
-use crate::alipay::{AlipayNotify, AlipayNotifyData};
 
 pub struct AlipayClient {
     cfg: Arc<AlipayConfig>,
@@ -56,7 +56,11 @@ impl AlipayClient {
         }
     }
 
-    fn build_common_params(&self, method: &str, order: &serde_json::Value) -> BTreeMap<String, String> {
+    fn build_common_params(
+        &self,
+        method: &str,
+        order: &serde_json::Value,
+    ) -> BTreeMap<String, String> {
         let mut params = BTreeMap::new();
 
         params.insert("app_id".into(), self.cfg.app_id.clone());
@@ -72,23 +76,22 @@ impl AlipayClient {
 
         // 证书模式
         if self.cfg.app_cert_path.is_some() && self.cfg.alipay_root_cert_path.is_some() {
-            if self.cfg.app_cert_path.is_some() && self.cfg.alipay_root_cert_path.is_some() {
-                if let Some(app_cert_path) = &self.cfg.app_cert_path {
-                    let app_sn = get_cert_sn(app_cert_path);
-                    if !app_sn.is_empty() {
-                        params.insert("app_cert_sn".into(), app_sn);
-                    }
+            if let Some(app_cert_path) = &self.cfg.app_cert_path {
+                let app_sn = get_cert_sn(app_cert_path);
+                println!("app_cert_sn: {}", app_sn);
+                if !app_sn.is_empty() {
+                    params.insert("app_cert_sn".into(), app_sn);
                 }
+            }
 
-                if let Some(root_cert_path) = &self.cfg.alipay_root_cert_path {
-                    let root_sn = get_root_cert_sn(root_cert_path);
-                    if !root_sn.is_empty() {
-                        params.insert("alipay_root_cert_sn".into(), root_sn);
-                    }
+            if let Some(root_cert_path) = &self.cfg.alipay_root_cert_path {
+                let root_sn = get_root_cert_sn(root_cert_path);
+                println!("alipay_root_cert_sn: {}", root_sn);
+                if !root_sn.is_empty() {
+                    params.insert("alipay_root_cert_sn".into(), root_sn);
                 }
             }
         }
-
         // 服务商参数
         if let Mode::Service = self.mode {
             if let Some(auth_token) = &self.cfg.app_auth_token {
@@ -107,7 +110,10 @@ impl AlipayClient {
         params
     }
 
-    async fn do_request(&self, params: BTreeMap<String, String>) -> Result<serde_json::Value, PayError> {
+    async fn do_request(
+        &self,
+        params: BTreeMap<String, String>,
+    ) -> Result<serde_json::Value, PayError> {
         let sign_src = Self::build_sign_string(&params);
         let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)
             .map_err(|e| PayError::Crypto(e.to_string()))?;
@@ -179,7 +185,8 @@ impl AlipayClient {
         params.insert("sign".into(), sign);
 
         // 拼接跳转链接
-        let query = params.iter()
+        let query = params
+            .iter()
             .map(|(k, v)| format!("{}={}", k, encode(v)))
             .collect::<Vec<_>>()
             .join("&");
@@ -205,7 +212,8 @@ impl AlipayClient {
 {}<input type="submit" value="Pay with Alipay" style="display:none"></form>
 <script>document.forms['alipaysubmit'].submit();</script>"#,
             self.gateway,
-            params.iter()
+            params
+                .iter()
                 .map(|(k, v)| format!(r#"<input type="hidden" name="{}" value="{}"/>"#, k, v))
                 .collect::<Vec<_>>()
                 .join("\n")
@@ -215,7 +223,10 @@ impl AlipayClient {
     }
 
     /// 小程序支付（创建订单后由前端拉起）
-    pub async fn mini_program(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+    pub async fn mini_program(
+        &self,
+        mut order: serde_json::Value,
+    ) -> Result<serde_json::Value, PayError> {
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.create", &order);
         params.insert("biz_content".into(), order.to_string());
@@ -224,7 +235,11 @@ impl AlipayClient {
 
         if let Some(result) = resp.get("alipay_trade_create_response") {
             if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
-                let trade_no = result.get("trade_no").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                let trade_no = result
+                    .get("trade_no")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string();
                 return Ok(serde_json::json!({
                     "trade_no": trade_no,
                     "out_trade_no": order.get("out_trade_no").and_then(|v| v.as_str()).unwrap_or_default(),
@@ -241,7 +256,7 @@ impl AlipayClient {
         &self,
         params: &std::collections::HashMap<String, String>,
     ) -> Result<AlipayNotifyData, PayError> {
-/*        let alipay_public_key = if let Some(cert_path) = &self.cfg.alipay_cert_path {
+        /*        let alipay_public_key = if let Some(cert_path) = &self.cfg.alipay_cert_path {
             let data = std::fs::read(cert_path).map_err(|e| PayError::Crypto(e.to_string()))?;
             let cert = openssl::x509::X509::from_pem(&data)
                 .map_err(|e| PayError::Crypto(e.to_string()))?;
