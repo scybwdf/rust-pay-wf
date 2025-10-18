@@ -128,7 +128,6 @@ pub fn get_cert_sn(cert_path: &str) -> String {
     format!("{:x}", md5::compute(raw))
 }
 
-/// 从根证书文件计算 root_sn（失败返回空字符串）
 pub fn get_root_cert_sn(root_path: &str) -> String {
     let text = match fs::read_to_string(root_path) {
         Ok(t) => t,
@@ -142,13 +141,11 @@ pub fn get_root_cert_sn(root_path: &str) -> String {
             let cert_data = format!("{}-----END CERTIFICATE-----", block);
             let cert = match X509::from_pem(cert_data.as_bytes()) {
                 Ok(c) => c,
-                Err(_) => continue,
+                Err(e) => {
+                    eprintln!("Failed to parse cert block: {}", e);
+                    continue;
+                }
             };
-
-            let alg = cert.signature_algorithm().object().nid().short_name().unwrap_or("");
-            if !(alg.contains("sha1") || alg.contains("sha256")) {
-                continue;
-            }
 
             let issuer = cert
                 .issuer_name()
@@ -163,7 +160,10 @@ pub fn get_root_cert_sn(root_path: &str) -> String {
 
             let sn_hex = match cert.serial_number().to_bn().and_then(|bn| bn.to_hex_str()) {
                 Ok(s) => s.to_string(),
-                Err(_) => continue,
+                Err(e) => {
+                    eprintln!("Failed to get serial number: {}", e);
+                    continue;
+                }
             };
 
             let raw = format!("{}{}", issuer, sn_hex);
@@ -172,12 +172,12 @@ pub fn get_root_cert_sn(root_path: &str) -> String {
     }
 
     if sns.is_empty() {
+        eprintln!("No valid cert SN found in {}", root_path);
         "".to_string()
     } else {
         sns.join("_")
     }
 }
-
 /// 加载私钥字符串，自动识别 `.pem` 文件 / 原始字符串
 #[inline]
 pub fn load_private_key(source: &str) -> String {
