@@ -6,7 +6,6 @@ use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer,x509::X509};
 use rand::Rng;
 use std::time::Duration;
 use std::fs;
-use std::io::Read;
 use std::path::Path;
 use openssl::hash::hash;
 use openssl::nid::Nid;
