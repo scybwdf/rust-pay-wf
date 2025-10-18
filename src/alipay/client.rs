@@ -167,6 +167,70 @@ impl AlipayClient {
         self.do_request(params).await
     }
 
+    /// ✅ H5 支付（手机浏览器）
+    pub async fn wap(&self, mut order: serde_json::Value) -> Result<String, PayError> {
+        self.build_service_provider_params(&mut order);
+        let mut params = self.build_common_params("alipay.trade.wap.pay", &order);
+        params.insert("biz_content".into(), order.to_string());
+
+        let sign_src = Self::build_sign_string(&params);
+        let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src).map_err(|e| PayError::Crypto(e.to_string()))?;
+        params.insert("sign".into(), sign);
+
+        // 返回可直接跳转的 URL
+        let query = params.iter().map(|(k, v)| format!("{}={}", k, encode(v))).collect::<Vec<_>>().join("&");
+        Ok(format!("{}?{}", self.gateway, query))
+    }
+
+    /// PC 网页支付
+    pub async fn page(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        self.build_service_provider_params(&mut order);
+        let mut params = self.build_common_params("alipay.trade.page.pay", &order);
+        params.insert("biz_content".into(), order.to_string());
+
+        let sign_src = Self::build_sign_string(&params);
+        let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)
+            .map_err(|e| PayError::Crypto(e.to_string()))?;
+        params.insert("sign".into(), sign);
+
+        // 返回 form 表单字符串（前端可直接渲染提交）
+        let form_html = format!(
+            r#"<form id="alipaysubmit" name="alipaysubmit" action="{}" method="GET">
+{}<input type="submit" value="Pay with Alipay" style="display:none"></form>
+<script>document.forms['alipaysubmit'].submit();</script>"#,
+            self.gateway,
+            params.iter()
+                .map(|(k, v)| format!(r#"<input type="hidden" name="{}" value="{}"/>"#, k, v))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+
+        Ok(serde_json::json!({ "form_html": form_html }))
+    }
+    
+    /// 小程序支付（创建订单后由前端拉起）
+    pub async fn mini_program(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        self.build_service_provider_params(&mut order);
+        let mut params = self.build_common_params("alipay.trade.create", &order);
+        params.insert("biz_content".into(), order.to_string());
+
+        let resp = self.do_request(params).await?;
+
+        if let Some(result) = resp.get("alipay_trade_create_response") {
+            if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
+                let trade_no = result.get("trade_no").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                return Ok(serde_json::json!({
+                    "trade_no": trade_no,
+                    "out_trade_no": order.get("out_trade_no").and_then(|v| v.as_str()).unwrap_or_default(),
+                    "msg": "ok"
+                }));
+            } else {
+                return Err(PayError::from_alipay_response(result));
+            }
+        }
+        Err(PayError::Crypto("invalid alipay response".into()))
+    }
+
     pub fn verify_notify(
         &self,
         params: &std::collections::HashMap<String, String>,
