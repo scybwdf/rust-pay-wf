@@ -102,8 +102,14 @@ pub fn extract_pubkey_from_cert(cert_pem: &str) -> anyhow::Result<String> {
     Ok(String::from_utf8(pub_pem)?)
 }
 
+// get cert sn by cert file by alipay
+pub fn get_cert_sn(cert: &str) -> anyhow::Result<String> {
+    let cert = std::fs::read_to_string(cert)?;
+    get_cert_sn_by_content(cert.as_ref())
+}
+
 /// 从证书文件提取 SN（失败返回空字符串）
-pub fn get_cert_sn(cert_path: &str) -> String {
+/*pub fn get_cert_sn(cert_path: &str) -> String {
     let data = match fs::read(cert_path) {
         Ok(d) => d,
         Err(_) => return "".to_string(),
@@ -132,7 +138,7 @@ pub fn get_cert_sn(cert_path: &str) -> String {
 
     let raw = format!("{}{}", issuer, sn_hex);
     format!("{:x}", md5::compute(raw))
-}
+}*/
 /// get alipay root cert sn
 pub fn get_root_cert_sn(cert_content: &str) -> anyhow::Result<String> {
     let cert_content = std::fs::read_to_string(cert_content)?;
