@@ -168,18 +168,24 @@ impl AlipayClient {
     }
 
     /// ✅ H5 支付（手机浏览器）
-    pub async fn wap(&self, mut order: serde_json::Value) -> Result<String, PayError> {
+    pub async fn h5(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.wap.pay", &order);
         params.insert("biz_content".into(), order.to_string());
 
         let sign_src = Self::build_sign_string(&params);
-        let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src).map_err(|e| PayError::Crypto(e.to_string()))?;
+        let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)
+            .map_err(|e| PayError::Crypto(e.to_string()))?;
         params.insert("sign".into(), sign);
 
-        // 返回可直接跳转的 URL
-        let query = params.iter().map(|(k, v)| format!("{}={}", k, encode(v))).collect::<Vec<_>>().join("&");
-        Ok(format!("{}?{}", self.gateway, query))
+        // 拼接跳转链接
+        let query = params.iter()
+            .map(|(k, v)| format!("{}={}", k, encode(v)))
+            .collect::<Vec<_>>()
+            .join("&");
+        let url = format!("{}?{}", self.gateway, query);
+
+        Ok(serde_json::json!({ "pay_url": url }))
     }
 
     /// PC 网页支付
@@ -207,7 +213,7 @@ impl AlipayClient {
 
         Ok(serde_json::json!({ "form_html": form_html }))
     }
-    
+
     /// 小程序支付（创建订单后由前端拉起）
     pub async fn mini_program(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
         self.build_service_provider_params(&mut order);
