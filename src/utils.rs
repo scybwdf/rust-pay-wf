@@ -131,7 +131,10 @@ pub fn get_cert_sn(cert_path: &str) -> String {
 pub fn get_root_cert_sn(root_path: &str) -> String {
     let text = match fs::read_to_string(root_path) {
         Ok(t) => t,
-        Err(_) => return "".to_string(),
+        Err(_) => {
+            eprintln!("Failed to read root cert file: {}", root_path);
+            return "".to_string();
+        }
     };
 
     let mut sns = vec![];
