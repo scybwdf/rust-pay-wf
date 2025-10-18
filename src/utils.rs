@@ -8,6 +8,7 @@ use std::time::Duration;
 use time::OffsetDateTime;
 use std::fs;
 use std::path::Path;
+use generic_array::GenericArray;
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
@@ -56,7 +57,8 @@ pub fn aes_gcm_decrypt(
     }
     let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     let nonce_bytes = nonce.as_bytes();
-    let nonce = Nonce::clone_from_slice(nonce_bytes); // Nonce 类型别名
+    //let nonce = Nonce::clone_from_slice(nonce_bytes); // Nonce 类型别名
+    let nonce= *GenericArray::from_slice(nonce_bytes);
     let ciphertext = base64::engine::general_purpose::STANDARD.decode(ciphertext_b64)?;
     let plain = cipher.decrypt(
         &nonce,
