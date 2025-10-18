@@ -20,8 +20,8 @@ time = "0.3"
 openssl = { version = "0.10", features = ["v102"] }
 base64 = "0.21"
 urlencoding = "1.3"
-aes-gcm = "0.10"
 generic-array = "1"
+aes-gcm = "0.10.3"
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2.0.17"
 once_cell = "1.21"
