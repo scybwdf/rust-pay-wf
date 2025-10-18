@@ -43,7 +43,7 @@ pub fn rsa_verify_sha256_pem(
     Ok(verifier.verify(&sig)?)
 }
 
-#[warn(deprecated)]
+
 pub fn aes_gcm_decrypt(
     api_v3_key: &str,
     associated_data: &str,
@@ -56,10 +56,10 @@ pub fn aes_gcm_decrypt(
     }
     let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     let nonce_bytes = nonce.as_bytes();
-    let nonce = Nonce::from_slice(nonce_bytes); // Nonce 类型别名
+    let nonce = Nonce::clone_from_slice(nonce_bytes); // Nonce 类型别名
     let ciphertext = base64::engine::general_purpose::STANDARD.decode(ciphertext_b64)?;
     let plain = cipher.decrypt(
-        nonce,
+        &nonce,
         aes_gcm::aead::Payload {
             msg: &ciphertext,
             aad: associated_data.as_bytes(),
