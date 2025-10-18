@@ -42,6 +42,8 @@ pub fn rsa_verify_sha256_pem(
     let sig = general_purpose::STANDARD.decode(signature_base64)?;
     Ok(verifier.verify(&sig)?)
 }
+
+#[warn(deprecated)]
 pub fn aes_gcm_decrypt(
     api_v3_key: &str,
     associated_data: &str,
@@ -55,7 +57,6 @@ pub fn aes_gcm_decrypt(
     let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     let nonce_bytes = nonce.as_bytes();
     let nonce = Nonce::from_slice(nonce_bytes); // Nonce 类型别名
-    //let nonce = Nonce::from_slice(nonce_bytes);
     let ciphertext = base64::engine::general_purpose::STANDARD.decode(ciphertext_b64)?;
     let plain = cipher.decrypt(
         nonce,
