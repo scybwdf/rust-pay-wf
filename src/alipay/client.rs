@@ -86,8 +86,8 @@ impl AlipayClient {
 
             if let Some(root_cert_path) = &self.cfg.alipay_root_cert_path {
                 let root_sn = get_root_cert_sn(root_cert_path);
-                println!("alipay_root_cert_sn: {}", root_sn);
-                if !root_sn.is_empty() {
+                println!("alipay_root_cert_sn: {:?}", root_sn);
+                if let Ok(root_sn) = root_sn {
                     params.insert("alipay_root_cert_sn".into(), root_sn);
                 }
             }

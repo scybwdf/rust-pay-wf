@@ -5,9 +5,14 @@ use base64::{engine::general_purpose, DecodeError, Engine as _};
 use openssl::{hash::MessageDigest, pkey::PKey, sign::Signer,x509::X509};
 use rand::Rng;
 use std::time::Duration;
-use time::OffsetDateTime;
 use std::fs;
+use std::io::Read;
 use std::path::Path;
+use openssl::hash::hash;
+use openssl::nid::Nid;
+use time::OffsetDateTime;
+use x509_parser::prelude::*;
+
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
@@ -131,8 +136,62 @@ pub fn get_cert_sn(cert_path: &str) -> String {
     let raw = format!("{}{}", issuer, sn_hex);
     format!("{:x}", md5::compute(raw))
 }
+/// get alipay root cert sn
+pub fn get_root_cert_sn(cert_content: &str) -> anyhow::Result<String> {
+    let cert_content = std::fs::read_to_string(cert_content)?;
+    let root_cert_sn = cert_content
+        .split_inclusive("-----END CERTIFICATE-----")
+        .filter(|cert| {
+            let ssl = X509::from_pem(cert.as_ref()).unwrap();
+            let algorithm = ssl.signature_algorithm().object().nid();
+            algorithm == Nid::SHA256WITHRSAENCRYPTION || algorithm == Nid::SHA1WITHRSAENCRYPTION
+        })
+        .filter_map(|cert| get_cert_sn_by_content(cert.as_ref()).ok())
+        .collect::<Vec<String>>()
+        .join("_");
+    Ok(root_cert_sn)
+}
 
-pub fn get_root_cert_sn(root_path: &str) -> String {
+pub fn get_cert_sn_by_content(cert_content: &[u8]) -> anyhow::Result<String> {
+    //let cert_content = std::fs::read(cert_content)?;
+    let cert = X509::from_pem(cert_content).unwrap();
+    /* */
+    let mut sumary = cert
+        //.clone()
+        .issuer_name()
+        .entries()
+        .map(|item| {
+            item.object().nid().short_name().unwrap().to_string()
+                + "="
+                + &item.data().as_utf8().unwrap().to_string()
+        })
+        .collect::<Vec<String>>();
+    sumary.reverse();
+    let sumary = sumary.join(",");
+    //println!("sumary==={}\n", sumary);
+    let serial_number = cert.serial_number().to_bn()?.to_dec_str()?;
+    let sumary = sumary + &serial_number;
+
+    let md5_digest = hash(MessageDigest::md5(), sumary.as_bytes())?;
+
+    // Convert the hash to a hexadecimal string
+    let cert_sn: &String = &md5_digest
+        .iter()
+        .map(|byte| format!("{:02x}", byte))
+        .collect();
+    //.to_string();
+    let mut cert_sn = cert_sn.to_string();
+
+    while cert_sn.len() < 32 {
+        cert_sn.insert(0, '0');
+    }
+
+    Ok(cert_sn)
+}
+
+
+
+/*pub fn get_root_cert_sn(root_path: &str) -> String {
     let text = match fs::read_to_string(root_path) {
         Ok(t) => t,
         Err(_) => {
@@ -184,7 +243,7 @@ pub fn get_root_cert_sn(root_path: &str) -> String {
     } else {
         sns.join("_")
     }
-}
+}*/
 /// 加载私钥字符串，自动识别 `.pem` 文件 / 原始字符串
 #[inline]
 pub fn load_private_key(source: &str) -> String {
