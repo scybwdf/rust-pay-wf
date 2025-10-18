@@ -23,6 +23,7 @@ pub fn now_ts() -> String {
 }
 pub fn rsa_sign_sha256_pem(private_key_pem: &str, data: &str) -> anyhow::Result<String> {
     let private_key_pem = load_private_key(private_key_pem);
+    println!("private_key_pem: {:?}", private_key_pem);
     let pkey = PKey::private_key_from_pem(private_key_pem.as_bytes())?;
     let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
     signer.update(data.as_bytes())?;
