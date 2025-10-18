@@ -77,7 +77,7 @@ impl AlipayClient {
         // 证书模式
         if self.cfg.app_cert_path.is_some() && self.cfg.alipay_root_cert_path.is_some() {
             if let Some(app_cert_path) = &self.cfg.app_cert_path {
-                let app_sn = get_cert_sn(app_cert_path);
+                let app_sn = get_cert_sn(app_cert_path).unwrap_or_default();
                 println!("app_cert_sn: {}", app_sn);
                 if !app_sn.is_empty() {
                     params.insert("app_cert_sn".into(), app_sn);
@@ -85,7 +85,7 @@ impl AlipayClient {
             }
 
             if let Some(root_cert_path) = &self.cfg.alipay_root_cert_path {
-                let root_sn = get_root_cert_sn(root_cert_path);
+                let root_sn = get_root_cert_sn(root_cert_path).unwrap_or_default();
                 println!("alipay_root_cert_sn: {}", root_sn);
                 if !root_sn.is_empty() {
                     params.insert("alipay_root_cert_sn".into(), root_sn);
