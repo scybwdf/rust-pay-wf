@@ -58,10 +58,10 @@ pub fn aes_gcm_decrypt(
     let nonce_bytes = nonce.as_bytes();
     //let nonce = Nonce::clone_from_slice(nonce_bytes); // Nonce 类型别名
     #[allow(deprecated)]
-    let nonce= Nonce::clone_from_slice(nonce_bytes);
+    let nonce= Nonce::from_slice(nonce_bytes);
     let ciphertext = base64::engine::general_purpose::STANDARD.decode(ciphertext_b64)?;
     let plain = cipher.decrypt(
-        &nonce,
+        nonce,
         aes_gcm::aead::Payload {
             msg: &ciphertext,
             aad: associated_data.as_bytes(),
