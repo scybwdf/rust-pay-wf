@@ -8,7 +8,6 @@ use std::time::Duration;
 use time::OffsetDateTime;
 use std::fs;
 use std::path::Path;
-use aes_gcm::aead::generic_array::GenericArray;
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
