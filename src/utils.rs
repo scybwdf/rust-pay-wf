@@ -7,6 +7,7 @@ use rand::Rng;
 use std::time::Duration;
 use time::OffsetDateTime;
 use std::fs;
+use std::path::Path;
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
@@ -21,6 +22,7 @@ pub fn now_ts() -> String {
     OffsetDateTime::now_utc().unix_timestamp().to_string()
 }
 pub fn rsa_sign_sha256_pem(private_key_pem: &str, data: &str) -> anyhow::Result<String> {
+    let private_key_pem = load_private_key(private_key_pem);
     let pkey = PKey::private_key_from_pem(private_key_pem.as_bytes())?;
     let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
     signer.update(data.as_bytes())?;
@@ -173,4 +175,45 @@ pub fn get_root_cert_sn(root_path: &str) -> String {
     } else {
         sns.join("_")
     }
+}
+
+/// 加载私钥字符串，自动识别 `.pem` 文件 / 原始字符串
+#[inline]
+pub fn load_private_key(source: &str) -> String {
+    // 优先判断是否是文件路径
+    let path = Path::new(source);
+    if path.exists() {
+        // 直接读取文件内容（.pem 或其他）
+        let data = fs::read_to_string(path).unwrap_or_default();
+        if source.ends_with(".pem") || data.contains("-----BEGIN") {
+            return data; // 已经是 PEM 格式
+        }
+        return wrap_rsa_key(&data);
+    }
+
+    // 不是文件路径，直接判断字符串是否 PEM 格式
+    if source.contains("-----BEGIN") {
+        source.to_string()
+    } else {
+        wrap_rsa_key(source)
+    }
+}
+
+/// 自动包装成 PEM 格式 (最小化分配、64列换行)
+#[inline]
+fn wrap_rsa_key(raw: &str) -> String {
+    let mut key = String::with_capacity(raw.len() + 80);
+    key.push_str("-----BEGIN RSA PRIVATE KEY-----\n");
+
+    let bytes = raw.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        let end = usize::min(i + 64, bytes.len());
+        key.push_str(unsafe { std::str::from_utf8_unchecked(&bytes[i..end]) });
+        key.push('\n');
+        i = end;
+    }
+
+    key.push_str("-----END RSA PRIVATE KEY-----");
+    key
 }
