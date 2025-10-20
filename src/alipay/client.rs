@@ -281,7 +281,6 @@ impl AlipayClient {
 
         // 填充 biz_content（包含退款相关的信息）
         params.insert("biz_content".into(), order.to_string());
-        println!("Refund request params: {:?}", params);
         // 发送请求
         let resp = self.do_request(params).await?;
         // 解析支付宝的返回结果
