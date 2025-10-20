@@ -38,14 +38,20 @@ pub fn rsa_verify_sha256_pem(
     signature_base64: &str,
 ) -> anyhow::Result<bool> {
     use openssl::sign::Verifier;
-    println!("public_key_pemv: {:?}", public_key_pem);
-    let pkey = PKey::public_key_from_pem(public_key_pem.as_bytes())?;
+    // 判断是证书还是公钥
+    let pkey = if public_key_pem.contains("BEGIN CERTIFICATE") {
+        // 解析 X.509 证书，从证书提取公钥
+        let cert = X509::from_pem(public_key_pem.as_bytes())?;
+        cert.public_key()?
+    } else {
+        // 直接解析公钥 PEM
+        PKey::public_key_from_pem(public_key_pem.as_bytes())?
+    };
     let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
     verifier.update(data.as_bytes())?;
     let sig = general_purpose::STANDARD.decode(signature_base64)?;
     Ok(verifier.verify(&sig)?)
 }
-
 
 pub fn aes_gcm_decrypt(
     api_v3_key: &str,
