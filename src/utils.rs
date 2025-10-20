@@ -38,6 +38,7 @@ pub fn rsa_verify_sha256_pem(
     signature_base64: &str,
 ) -> anyhow::Result<bool> {
     use openssl::sign::Verifier;
+    println!("public_key_pemv: {:?}", public_key_pem);
     let pkey = PKey::public_key_from_pem(public_key_pem.as_bytes())?;
     let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey)?;
     verifier.update(data.as_bytes())?;

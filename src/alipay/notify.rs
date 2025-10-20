@@ -58,11 +58,12 @@ impl AlipayNotify {
                 pubkey_pem = pem;
             }
         }
+        println!("pubkey_pem1: {}", pubkey_pem);
         // 2) 如果没配置证书，则使用公钥字符串模式
         if pubkey_pem.is_empty() {
             pubkey_pem = self.cfg.alipay_public_key.clone().unwrap_or_default();
         }
-
+        println!("pubkey_pem2: {}", pubkey_pem);
         if pubkey_pem.is_empty() {
             return Err(PayError::Other("missing alipay public key".into()));
         }
