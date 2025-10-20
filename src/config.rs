@@ -39,6 +39,10 @@ pub struct AlipayConfig {
     // 服务商配置
     pub app_auth_token: Option<String>,
     pub sys_service_provider_id: Option<String>,
+
+    //回调通知
+    pub notify_url: Option<String>,
+    pub return_url: Option<String>,
 }
 #[derive(Clone)]
 pub struct UnionpayConfig {

@@ -99,15 +99,17 @@ impl AlipayClient {
                 params.insert("app_auth_token".into(), auth_token.clone());
             }
         }
-
-        if let Some(n) = order.get("notify_url").and_then(|v| v.as_str()) {
-            params.insert("notify_url".into(), n.to_string());
+        //如果order中没有notify_url和return_url，才使用配置中的
+        if order.get("notify_url").is_none(){
+            if let Some(n) = &self.cfg.notify_url {
+                params.insert("notify_url".into(), n.clone());
+            }
         }
-
-        if let Some(r) = order.get("return_url").and_then(|v| v.as_str()) {
-            params.insert("return_url".into(), r.to_string());
+        if order.get("return_url").is_none(){
+            if let Some(n) = &self.cfg.return_url {
+                params.insert("return_url".into(), n.clone());
+            }
         }
-
         params
     }
 
