@@ -5,6 +5,7 @@ use crate::utils::{get_cert_sn, get_root_cert_sn, rsa_sign_sha256_pem};
 use reqwest::Client;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use serde_json::json;
 use urlencoding::encode;
 
 pub struct AlipayClient {
@@ -148,6 +149,9 @@ impl AlipayClient {
     }
 
     pub async fn app(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        if order.get("product_code").is_none() {
+            order["product_code"] = json!("QUICK_MSECURITY_PAY");
+        }
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.app.pay", &order);
         params.insert("biz_content".into(), order.to_string());
@@ -167,6 +171,10 @@ impl AlipayClient {
     }
 
     pub async fn scan(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        //没有 product_code 时，默认值为 FACE_TO_FACE_PAYMENT
+        if order.get("product_code").is_none() {
+            order["product_code"] = json!("FACE_TO_FACE_PAYMENT");
+        }
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.precreate", &order);
         params.insert("biz_content".into(), order.to_string());
@@ -175,6 +183,10 @@ impl AlipayClient {
 
     /// ✅ H5 支付（手机浏览器）
     pub async fn h5(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        //没有 product_code 时，默认值为 QUICK_WAP_PAY
+        if order.get("product_code").is_none() {
+            order["product_code"] = json!("QUICK_WAP_WAY");
+        }
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.wap.pay", &order);
         params.insert("biz_content".into(), order.to_string());
@@ -197,6 +209,10 @@ impl AlipayClient {
 
     /// PC 网页支付
     pub async fn page(&self, mut order: serde_json::Value) -> Result<serde_json::Value, PayError> {
+        //没有 product_code 时，默认值为 FAST_INSTANT_TRADE_PAY
+        if order.get("product_code").is_none() {
+            order["product_code"] = json!("FAST_INSTANT_TRADE_PAY");
+        }
         self.build_service_provider_params(&mut order);
         let mut params = self.build_common_params("alipay.trade.page.pay", &order);
         params.insert("biz_content".into(), order.to_string());
@@ -228,6 +244,10 @@ impl AlipayClient {
         mut order: serde_json::Value,
     ) -> Result<serde_json::Value, PayError> {
         self.build_service_provider_params(&mut order);
+        //没有 product_code 时，默认值为 JSAPI_PAY
+        if order.get("product_code").is_none() {
+            order["JSAPI_PAY"] = json!("JSAPI_PAY");
+        }
         let mut params = self.build_common_params("alipay.trade.create", &order);
         params.insert("biz_content".into(), order.to_string());
 
