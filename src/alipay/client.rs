@@ -286,7 +286,7 @@ impl AlipayClient {
 
         // 填充 biz_content（包含退款相关的信息）
         params.insert("biz_content".into(), order.to_string());
-
+        println!("Refund request params: {:?}", params);
         // 签名
         let sign_src = Self::build_sign_string(&params);
         let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)

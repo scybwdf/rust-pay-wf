@@ -25,7 +25,6 @@ pub fn now_ts() -> String {
 }
 pub fn rsa_sign_sha256_pem(private_key_pem: &str, data: &str) -> anyhow::Result<String> {
     let private_key_pem = load_private_key(private_key_pem);
-    println!("private_key_pem: {:?}", private_key_pem);
     let pkey = PKey::private_key_from_pem(private_key_pem.as_bytes())?;
     let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
     signer.update(data.as_bytes())?;
@@ -115,37 +114,6 @@ pub fn get_cert_sn(cert: &str) -> anyhow::Result<String> {
     get_cert_sn_by_content(cert.as_ref())
 }
 
-/// 从证书文件提取 SN（失败返回空字符串）
-/*pub fn get_cert_sn(cert_path: &str) -> String {
-    let data = match fs::read(cert_path) {
-        Ok(d) => d,
-        Err(_) => return "".to_string(),
-    };
-
-    let cert = match X509::from_pem(&data) {
-        Ok(c) => c,
-        Err(_) => return "".to_string(),
-    };
-
-    let issuer = cert
-        .issuer_name()
-        .entries()
-        .map(|e| {
-            let key = e.object().nid().short_name().unwrap_or("");
-            let val = e.data().as_utf8().ok().map(|s| s.to_string()).unwrap_or_default();
-            format!("{}={}", key, val)
-        })
-        .collect::<Vec<_>>()
-        .join(",");
-
-    let sn_hex = match cert.serial_number().to_bn().and_then(|bn| bn.to_hex_str()) {
-        Ok(s) => s.to_string(),
-        Err(_) => return "".to_string(),
-    };
-
-    let raw = format!("{}{}", issuer, sn_hex);
-    format!("{:x}", md5::compute(raw))
-}*/
 /// get alipay root cert sn
 pub fn get_root_cert_sn(cert_content: &str) -> anyhow::Result<String> {
     let cert_content = std::fs::read_to_string(cert_content)?;
@@ -199,61 +167,6 @@ pub fn get_cert_sn_by_content(cert_content: &[u8]) -> anyhow::Result<String> {
     Ok(cert_sn)
 }
 
-
-
-/*pub fn get_root_cert_sn(root_path: &str) -> String {
-    let text = match fs::read_to_string(root_path) {
-        Ok(t) => t,
-        Err(_) => {
-            eprintln!("Failed to read root cert file: {}", root_path);
-            return "".to_string();
-        }
-    };
-
-    let mut sns = vec![];
-
-    for block in text.split("-----END CERTIFICATE-----") {
-        if block.contains("-----BEGIN CERTIFICATE-----") {
-            let cert_data = format!("{}-----END CERTIFICATE-----", block);
-            let cert = match X509::from_pem(cert_data.as_bytes()) {
-                Ok(c) => c,
-                Err(e) => {
-                    eprintln!("Failed to parse cert block: {}", e);
-                    continue;
-                }
-            };
-
-            let issuer = cert
-                .issuer_name()
-                .entries()
-                .map(|e| {
-                    let key = e.object().nid().short_name().unwrap_or("");
-                    let val = e.data().as_utf8().ok().map(|s| s.to_string()).unwrap_or_default();
-                    format!("{}={}", key, val)
-                })
-                .collect::<Vec<_>>()
-                .join(",");
-
-            let sn_hex = match cert.serial_number().to_bn().and_then(|bn| bn.to_hex_str()) {
-                Ok(s) => s.to_string(),
-                Err(e) => {
-                    eprintln!("Failed to get serial number: {}", e);
-                    continue;
-                }
-            };
-
-            let raw = format!("{}{}", issuer, sn_hex);
-            sns.push(format!("{:x}", md5::compute(raw)));
-        }
-    }
-
-    if sns.is_empty() {
-        eprintln!("No valid cert SN found in {}", root_path);
-        "".to_string()
-    } else {
-        sns.join("_")
-    }
-}*/
 /// 加载私钥字符串，自动识别 `.pem` 文件 / 原始字符串
 #[inline]
 pub fn load_private_key(source: &str) -> String {

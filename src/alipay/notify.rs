@@ -58,12 +58,10 @@ impl AlipayNotify {
                 pubkey_pem = pem;
             }
         }
-        println!("pubkey_pem1: {}", pubkey_pem);
         // 2) 如果没配置证书，则使用公钥字符串模式
         if pubkey_pem.is_empty() {
             pubkey_pem = self.cfg.alipay_public_key.clone().unwrap_or_default();
         }
-        println!("pubkey_pem2: {}", pubkey_pem);
         if pubkey_pem.is_empty() {
             return Err(PayError::Other("missing alipay public key".into()));
         }
@@ -90,21 +88,7 @@ impl AlipayNotify {
                 trade_status
             )));
         }
-
-        // ---- Step 7. 服务商模式检查 ----
- /*       if let Mode::Service = self.cfg.mode {
-            if let Some(cfg_pid) = &self.cfg.sub_merchant_id {
-                if let Some(notify_pid) = params.get("sub_merchant_id") {
-                    if notify_pid != cfg_pid {
-                        return Err(PayError::Other(format!(
-                            "sub_merchant_id mismatch: notify={}, cfg={}",
-                            notify_pid, cfg_pid
-                        )));
-                    }
-                }
-            }
-        }*/
-
+        
         // ---- Step 8. 收集剩余字段 ----
         let mut others = HashMap::new();
         for (k, v) in params {
