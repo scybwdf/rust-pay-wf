@@ -284,15 +284,17 @@ impl AlipayClient {
         println!("Refund request params: {:?}", params);
         // 签名
         let sign_src = Self::build_sign_string(&params);
+        println!("Generated sign source: {}", sign_src); // 打印签名源字符串
+
         let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)
             .map_err(|e| PayError::Crypto(e.to_string()))?;
+        println!("Generated sign: {}", sign); // 打印生成的签名
 
         // 将签名加入到参数中
         params.insert("sign".into(), sign);
 
         // 发送请求
         let resp = self.do_request(params).await?;
-        println!("Refund response: {:?}", resp);
         // 解析支付宝的返回结果
         if let Some(result) = resp.get("alipay_trade_refund_response") {
             if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
@@ -308,6 +310,7 @@ impl AlipayClient {
                 "msg": "refund success"
             }));
             } else {
+                println!("Refund response: {:?}", resp);
                 return Err(PayError::from_alipay_response(result));
             }
         }
