@@ -42,7 +42,6 @@ pub struct AlipayConfig {
 
     //回调通知
     pub notify_url: Option<String>,
-    pub return_url: Option<String>,
 }
 #[derive(Clone)]
 pub struct UnionpayConfig {

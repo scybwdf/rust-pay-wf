@@ -105,11 +105,6 @@ impl AlipayClient {
                 params.insert("notify_url".into(), n.clone());
             }
         }
-        if order.get("return_url").is_none(){
-            if let Some(n) = &self.cfg.return_url {
-                params.insert("return_url".into(), n.clone());
-            }
-        }
         params
     }
 
@@ -297,7 +292,7 @@ impl AlipayClient {
 
         // 发送请求
         let resp = self.do_request(params).await?;
-
+        println!("Refund response: {:?}", resp);
         // 解析支付宝的返回结果
         if let Some(result) = resp.get("alipay_trade_refund_response") {
             if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
