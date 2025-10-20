@@ -274,21 +274,56 @@ impl AlipayClient {
         Err(PayError::Crypto("invalid alipay response".into()))
     }
 
+    pub async fn refund(
+        &self,
+        mut order: serde_json::Value,
+    ) -> Result<serde_json::Value, PayError> {
+        // 构建服务商参数
+        self.build_service_provider_params(&mut order);
+
+        // 组装公共参数
+        let mut params = self.build_common_params("alipay.trade.refund", &order);
+
+        // 填充 biz_content（包含退款相关的信息）
+        params.insert("biz_content".into(), order.to_string());
+
+        // 签名
+        let sign_src = Self::build_sign_string(&params);
+        let sign = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_src)
+            .map_err(|e| PayError::Crypto(e.to_string()))?;
+
+        // 将签名加入到参数中
+        params.insert("sign".into(), sign);
+
+        // 发送请求
+        let resp = self.do_request(params).await?;
+
+        // 解析支付宝的返回结果
+        if let Some(result) = resp.get("alipay_trade_refund_response") {
+            if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
+                // 退款成功
+                let trade_no = result
+                    .get("trade_no")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string();
+                return Ok(serde_json::json!({
+                "trade_no": trade_no,
+                "refund_amount": order.get("refund_amount").unwrap_or(&json!("0")).as_f64().unwrap_or(0.0),
+                "msg": "refund success"
+            }));
+            } else {
+                return Err(PayError::from_alipay_response(result));
+            }
+        }
+
+        Err(PayError::Crypto("invalid alipay refund response".into()))
+    }
+
     pub fn verify_notify(
         &self,
         params: &std::collections::HashMap<String, String>,
     ) -> Result<AlipayNotifyData, PayError> {
-        /*        let alipay_public_key = if let Some(cert_path) = &self.cfg.alipay_cert_path {
-            let data = std::fs::read(cert_path).map_err(|e| PayError::Crypto(e.to_string()))?;
-            let cert = openssl::x509::X509::from_pem(&data)
-                .map_err(|e| PayError::Crypto(e.to_string()))?;
-            let pubkey = cert.public_key().map_err(|e| PayError::Crypto(e.to_string()))?;
-            String::from_utf8(pubkey.public_key_to_pem().map_err(|e| PayError::Crypto(e.to_string()))?)
-                .map_err(|e| PayError::Crypto(e.to_string()))?
-        } else {
-            self.cfg.alipay_public_key.clone().ok_or_else(|| PayError::Crypto("missing alipay_public_key".into()))?
-        };*/
-
         let notify = AlipayNotify::new(self.cfg.clone());
         notify.verify_notify(params)
     }
