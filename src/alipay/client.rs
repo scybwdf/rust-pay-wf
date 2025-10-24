@@ -306,6 +306,43 @@ impl AlipayClient {
         Err(PayError::Crypto("invalid alipay refund response".into()))
     }
 
+    /// 使用授权码获取访问令牌
+    pub async fn get_oauth_token(&self, code: &str) -> Result<serde_json::Value, PayError> {
+        let mut params = self.build_common_params("alipay.system.oauth.token", &json!({}));
+        params.insert("grant_type".into(), "authorization_code".into());
+        params.insert("code".into(), code.to_string());
+
+        let resp = self.do_request(params).await?;
+
+        if let Some(token_data) = resp.get("alipay_system_oauth_token_response") {
+            if token_data.get("code").and_then(|v| v.as_str()) == Some("10000") {
+                return Ok(token_data.clone());
+            } else {
+                return Err(PayError::from_alipay_response(token_data));
+            }
+        }
+
+        Err(PayError::Crypto("invalid oauth token response".into()))
+    }
+
+    /// 使用访问令牌获取用户信息
+    pub async fn get_oauth_user_info(&self, auth_token: &str) -> Result<serde_json::Value, PayError> {
+        let mut params = self.build_common_params("alipay.user.info.share", &json!({}));
+        params.insert("auth_token".into(), auth_token.to_string());
+
+        let resp = self.do_request(params).await?;
+
+        if let Some(user_info) = resp.get("alipay_user_info_share_response") {
+            if user_info.get("code").and_then(|v| v.as_str()) == Some("10000") {
+                return Ok(user_info.clone());
+            } else {
+                return Err(PayError::from_alipay_response(user_info));
+            }
+        }
+
+        Err(PayError::Crypto("invalid user info response".into()))
+    }
+
     pub fn verify_notify(
         &self,
         params: &std::collections::HashMap<String, String>,
