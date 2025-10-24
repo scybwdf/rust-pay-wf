@@ -140,6 +140,7 @@ impl AlipayClient {
         let v: serde_json::Value = serde_json::from_str(&resp).map_err(PayError::Json)?;
 
         if let Some(err) = v.get("error_response") {
+            println!("alipay error: {:?}", err);
             return Err(PayError::from_alipay_response(err));
         }
         Ok(v)
