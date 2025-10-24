@@ -313,7 +313,7 @@ impl AlipayClient {
         params.insert("code".into(), code.to_string());
 
         let resp = self.do_request(params).await?;
-
+        println!("1Oauth token response: {:?}", resp);
         if let Some(token_data) = resp.get("alipay_system_oauth_token_response") {
             if token_data.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 return Ok(token_data.clone());
@@ -332,7 +332,7 @@ impl AlipayClient {
         params.insert("auth_token".into(), auth_token.to_string());
 
         let resp = self.do_request(params).await?;
-
+        println!("1User info response: {:?}", resp);
         if let Some(user_info) = resp.get("alipay_user_info_share_response") {
             if user_info.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 return Ok(user_info.clone());
