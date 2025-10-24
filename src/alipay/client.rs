@@ -118,7 +118,7 @@ impl AlipayClient {
 
         let mut params_with_sign = params;
         params_with_sign.insert("sign".into(), sign);
-
+        println!("print params_with_sign {:?}", params_with_sign);
         let query = params_with_sign
             .iter()
             .map(|(k, v)| format!("{}={}", k, encode(v)))
