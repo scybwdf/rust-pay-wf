@@ -318,10 +318,11 @@ impl AlipayClient {
             if token_data.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 return Ok(token_data.clone());
             } else {
+                println!("Oauth token response: {:?}", resp);
                 return Err(PayError::from_alipay_response(token_data));
             }
         }
-
+        println!("Oauth token response: {:?}", resp);
         Err(PayError::Crypto("invalid oauth token response".into()))
     }
 
@@ -336,10 +337,11 @@ impl AlipayClient {
             if user_info.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 return Ok(user_info.clone());
             } else {
+                println!("User info response: {:?}", resp);
                 return Err(PayError::from_alipay_response(user_info));
             }
         }
-
+        println!("User info response: {:?}", resp);
         Err(PayError::Crypto("invalid user info response".into()))
     }
 
