@@ -108,7 +108,7 @@ impl AlipayClient {
         params
     }
 
-    async fn do_request(
+    pub async fn do_request(
         &self,
         params: BTreeMap<String, String>,
     ) -> Result<serde_json::Value, PayError> {
@@ -309,7 +309,10 @@ impl AlipayClient {
 
     /// 使用授权码获取访问令牌
     pub async fn get_oauth_token(&self, code: &str) -> Result<serde_json::Value, PayError> {
-        let mut params = self.build_common_params("alipay.system.oauth.token", &json!({}));
+        let mut order = json!({});
+        // 构建服务商参数
+        self.build_service_provider_params(&mut order);
+        let mut params = self.build_common_params("alipay.system.oauth.token", &order);
         params.insert("grant_type".into(), "authorization_code".into());
         params.insert("code".into(), code.to_string());
 
