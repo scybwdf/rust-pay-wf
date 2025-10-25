@@ -332,9 +332,7 @@ impl AlipayClient {
     pub async fn get_oauth_user_info(&self, auth_token: &str) -> Result<serde_json::Value, PayError> {
         let mut params = self.build_common_params("alipay.user.info.share", &json!({}));
         params.insert("auth_token".into(), auth_token.to_string());
-        params.remove("app_auth_token");
         let resp = self.do_request(params).await?;
-        println!("1User info response: {:?}", resp);
         if let Some(user_info) = resp.get("alipay_user_info_share_response") {
             if user_info.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 return Ok(user_info.clone());
