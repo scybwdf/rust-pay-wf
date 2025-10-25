@@ -309,10 +309,9 @@ impl AlipayClient {
 
     /// 使用授权码获取访问令牌
     pub async fn get_oauth_token(&self, code: &str) -> Result<serde_json::Value, PayError> {
-        let mut order = json!({});
-        // 构建服务商参数
-        self.build_service_provider_params(&mut order);
+        let order = json!({});
         let mut params = self.build_common_params("alipay.system.oauth.token", &order);
+        params.remove("app_auth_token");
         params.insert("grant_type".into(), "authorization_code".into());
         params.insert("code".into(), code.to_string());
 
@@ -334,7 +333,7 @@ impl AlipayClient {
     pub async fn get_oauth_user_info(&self, auth_token: &str) -> Result<serde_json::Value, PayError> {
         let mut params = self.build_common_params("alipay.user.info.share", &json!({}));
         params.insert("auth_token".into(), auth_token.to_string());
-
+        params.remove("app_auth_token");
         let resp = self.do_request(params).await?;
         println!("1User info response: {:?}", resp);
         if let Some(user_info) = resp.get("alipay_user_info_share_response") {
