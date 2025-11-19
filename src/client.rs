@@ -1,4 +1,4 @@
-use crate::config::{AlipayConfigOverride, PayConfig, PayConfigOverride, WechatConfig, WechatConfigOverride};
+use crate::config::{AlipayConfigOverride, PayConfig, WechatConfigOverride};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
 static CONFIG: OnceCell<Arc<PayConfig>> = OnceCell::new();
