@@ -16,8 +16,8 @@ pub struct WechatConfig {
     pub appid_mp: Option<String>,
     pub appid_mini: Option<String>,
     pub appid_app: Option<String>,
-    pub sub_mchid: Option<String>,
     pub notify_url: Option<String>,
+    pub sub_mchid: Option<String>,
 }
 #[derive(Clone)]
 pub struct AlipayConfig {
@@ -37,12 +37,32 @@ pub struct AlipayConfig {
     pub gateway: String,
 
     // 服务商配置
-    pub app_auth_token: Option<String>,
     pub sys_service_provider_id: Option<String>,
+    pub app_auth_token: Option<String>,
 
     //回调通知
     pub notify_url: Option<String>,
 }
+
+#[derive(Default)]
+pub struct PayConfigOverride {
+    pub wechat: Option<WechatConfigOverride>,
+    pub alipay: Option<AlipayConfigOverride>,
+}
+
+#[derive(Default)]
+pub struct WechatConfigOverride {
+    pub sub_mchid: Option<String>,
+    // 其他可覆盖的微信配置字段...
+}
+
+#[derive(Default)]
+pub struct AlipayConfigOverride {
+    // 服务商配置
+    pub app_auth_token: Option<String>,
+    // 其他可覆盖的支付宝配置字段...
+}
+
 #[derive(Clone)]
 pub struct UnionpayConfig {
     pub mer_id: String,
