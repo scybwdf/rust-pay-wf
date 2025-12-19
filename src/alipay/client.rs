@@ -250,7 +250,7 @@ impl AlipayClient {
         params.insert("biz_content".into(), order.to_string());
 
         let resp = self.do_request(params).await?;
-
+        println!("jsapi::{:?}", resp);
         if let Some(result) = resp.get("alipay_trade_create_response") {
             if result.get("code").and_then(|v| v.as_str()) == Some("10000") {
                 let trade_no = result
