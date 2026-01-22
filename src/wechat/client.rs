@@ -1,7 +1,7 @@
 use crate::config::{Mode, WechatConfig};
 use crate::errors::PayError;
 use crate::utils::{
-    extract_wechat_platform_cert_info, gen_nonce, now_ts, rsa_encrypt_oaep_with_public_key_pem,
+    extract_wechat_platform_cert_info, gen_nonce, now_ts,
     rsa_sign_sha256_pem,
 };
 use crate::wechat::certs::PlatformCerts;
