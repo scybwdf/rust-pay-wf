@@ -545,8 +545,6 @@ impl WechatClient {
 
         if let Some(tid) = transaction_id {
             full_url = format!("{}?transaction_id={}", full_url, tid);
-        } else {
-            full_url = full_url;
         }
         // 发送GET请求
         let resp = self.sign_and_post("GET", &full_url, &json!({})).await?;

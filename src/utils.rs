@@ -229,11 +229,6 @@ pub fn rsa_encrypt_oaep_with_public_key_pem(
     public_key_pem: &str,
     plaintext: &str,
 ) -> anyhow::Result<String> {
-    use openssl::encrypt::Encrypter;
-    use openssl::hash::MessageDigest;
-    use openssl::pkey::PKey;
-    use openssl::rsa::Rsa;
-
     // 1. 加载公钥PEM
     let rsa = Rsa::public_key_from_pem(public_key_pem.as_bytes())
         .map_err(|e| anyhow::anyhow!("Failed to parse public key PEM: {}", e))?;
