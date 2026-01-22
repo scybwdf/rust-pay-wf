@@ -7,9 +7,10 @@ use rand::Rng;
 use std::time::Duration;
 use std::fs;
 use std::path::Path;
+use openssl::encrypt::Encrypter;
 use openssl::hash::hash;
 use openssl::nid::Nid;
-
+use openssl::rsa::Rsa;
 
 pub fn gen_nonce(len: usize) -> String {
     let mut rng = rand::thread_rng();
@@ -220,4 +221,86 @@ where
     T: AsRef<[u8]>,
 {
     general_purpose::STANDARD.decode(input)
+}
+
+/// RSA-OAEP加密函数（微信支付接收方名称加密专用）
+/// 使用微信支付平台证书公钥进行加密
+pub fn rsa_encrypt_oaep_with_public_key_pem(
+    public_key_pem: &str,
+    plaintext: &str,
+) -> anyhow::Result<String> {
+    use openssl::encrypt::Encrypter;
+    use openssl::hash::MessageDigest;
+    use openssl::pkey::PKey;
+    use openssl::rsa::Rsa;
+
+    // 1. 加载公钥PEM
+    let rsa = Rsa::public_key_from_pem(public_key_pem.as_bytes())
+        .map_err(|e| anyhow::anyhow!("Failed to parse public key PEM: {}", e))?;
+
+    // 2. 创建PKey
+    let pkey = PKey::from_rsa(rsa)
+        .map_err(|e| anyhow::anyhow!("Failed to create PKey from RSA: {}", e))?;
+
+    // 3. 配置加密器
+    let mut encrypter = Encrypter::new(&pkey)
+        .map_err(|e| anyhow::anyhow!("Failed to create encrypter: {}", e))?;
+
+    encrypter.set_rsa_padding(openssl::rsa::Padding::PKCS1_OAEP)
+        .map_err(|e| anyhow::anyhow!("Failed to set padding: {}", e))?;
+
+    // 修正这里：使用 MessageDigest::sha1() 而不是 Md::sha1()
+    encrypter.set_rsa_mgf1_md(MessageDigest::sha1())
+        .map_err(|e| anyhow::anyhow!("Failed to set MGF1 hash: {}", e))?;
+
+    encrypter.set_rsa_oaep_md(MessageDigest::sha1())
+        .map_err(|e| anyhow::anyhow!("Failed to set OAEP hash: {}", e))?;
+
+    // 4. 计算加密长度并执行加密
+    let buffer_len = encrypter.encrypt_len(plaintext.as_bytes())
+        .map_err(|e| anyhow::anyhow!("Failed to get encrypt length: {}", e))?;
+    let mut encrypted = vec![0; buffer_len];
+
+    let enc_len = encrypter.encrypt(plaintext.as_bytes(), &mut encrypted)
+        .map_err(|e| anyhow::anyhow!("Failed to encrypt data: {}", e))?;
+
+    // 5. 截取实际加密数据并Base64编码
+    encrypted.truncate(enc_len);
+    Ok(base64::engine::general_purpose::STANDARD.encode(&encrypted))
+}
+
+/// 从微信支付平台证书中提取序列号（16进制，大写）
+/// 微信支付要求使用16进制格式的证书序列号，且为大写
+pub fn extract_wechat_cert_serial_number(cert_pem: &str) -> anyhow::Result<String> {
+    // 1. 解析证书
+    let cert = X509::from_pem(cert_pem.as_bytes())
+        .map_err(|e| anyhow::anyhow!("Failed to parse certificate PEM: {}", e))?;
+
+    // 2. 获取序列号（Asn1IntegerRef类型）
+    let serial = cert.serial_number();
+
+    // 3. 将Asn1Integer转换为BigNum，然后转换为16进制字符串
+    // 注意：Asn1IntegerRef没有to_hex_str方法，需要先转换为BigNum
+    let bn = serial.to_bn()
+        .map_err(|e| anyhow::anyhow!("Failed to convert serial to BigNum: {}", e))?;
+
+    // 4. 将BigNum转换为16进制字符串
+    let serial_hex = bn.to_hex_str()
+        .map_err(|e| anyhow::anyhow!("Failed to convert BigNum to hex: {}", e))?;
+
+    // 5. 转换为大写（微信支付要求）并去掉可能的"0x"前缀
+    let hex_str = serial_hex.to_string().trim_start_matches("0x").to_uppercase();
+
+    Ok(hex_str)
+}
+
+/// 从微信支付平台证书中提取序列号和公钥
+pub fn extract_wechat_platform_cert_info(cert_pem: &str) -> anyhow::Result<(String, String)> {
+    // 1. 提取序列号
+    let cert_sn = extract_wechat_cert_serial_number(cert_pem)?;
+
+    // 2. 提取公钥（使用您已有的函数）
+    let public_key_pem = extract_pubkey_from_cert(cert_pem)?;
+
+    Ok((cert_sn, public_key_pem))
 }
