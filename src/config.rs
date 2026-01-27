@@ -1,11 +1,11 @@
 use std::sync::Arc;
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Mode {
     Normal,
     Service,
     Sandbox,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WechatConfig {
     pub mchid: String,
     pub appid: Option<String>,//主商户appid，服务号
@@ -19,7 +19,7 @@ pub struct WechatConfig {
     pub notify_url: Option<String>,
     pub sub_mchid: Option<String>,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AlipayConfig {
     pub app_id: String,
     pub private_key_pem: String,
@@ -50,13 +50,13 @@ pub struct PayConfigOverride {
     pub alipay: Option<AlipayConfigOverride>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct WechatConfigOverride {
     pub sub_mchid: Option<String>,
     // 其他可覆盖的微信配置字段...
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct AlipayConfigOverride {
     // 服务商配置
     pub app_auth_token: Option<String>,
