@@ -1,11 +1,13 @@
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
+
 #[derive(Clone, Debug)]
 pub enum Mode {
     Normal,
     Service,
     Sandbox,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WechatConfig {
     pub mchid: String,
     pub appid: Option<String>,//主商户appid，服务号
@@ -19,7 +21,7 @@ pub struct WechatConfig {
     pub notify_url: Option<String>,
     pub sub_mchid: Option<String>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AlipayConfig {
     pub app_id: String,
     pub private_key_pem: String,
@@ -44,19 +46,19 @@ pub struct AlipayConfig {
     pub notify_url: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct PayConfigOverride {
     pub wechat: Option<WechatConfigOverride>,
     pub alipay: Option<AlipayConfigOverride>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct WechatConfigOverride {
     pub sub_mchid: Option<String>,
     // 其他可覆盖的微信配置字段...
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct AlipayConfigOverride {
     // 服务商配置
     pub app_auth_token: Option<String>,
