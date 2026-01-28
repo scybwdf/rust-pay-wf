@@ -643,10 +643,10 @@ impl WechatClient {
             ));
         }
         // 使用工具函数提取序列号和公钥
-        let public_key_pem = extract_wechat_platform_cert_info(&pub_pem)
-            .map_err(|e| PayError::Other(format!("Failed to extract cert info: {}", e)))?;
-        
-        Ok((cert_sn, public_key_pem))
+       // let public_key_pem = extract_wechat_platform_cert_info(&pub_pem)
+       //     .map_err(|e| PayError::Other(format!("Failed to extract cert info: {}", e)))?;
+
+        Ok((cert_sn, pub_pem))
     }
 
     /// 发送分账请求（完整实现）
