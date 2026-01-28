@@ -80,4 +80,8 @@ impl PlatformCerts {
         let m = self.map.lock().unwrap();
         m.get(serial).cloned()
     }
+    pub fn get_first(&self) -> Option<String> {
+        let m = self.map.lock().unwrap();
+        m.values().next().cloned()
+    }
 }

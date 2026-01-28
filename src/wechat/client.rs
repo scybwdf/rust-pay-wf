@@ -623,27 +623,18 @@ impl WechatClient {
     }
 
     async fn get_platform_certificate_info(&self) -> Result<(String, String), PayError> {
-    /*    let cert_pem = self
-            .cfg
-            .platform_public_key_pem
-            .as_deref()
-            .unwrap_or_default();
-        if cert_pem.is_empty() {
-            return Err(PayError::Other("platform_public_key_pem is empty".into()));
-        }*/
-        let serial_no = self.cfg.serial_no.as_str();
-        let mut pub_pem = self.certs.get_by_serial(serial_no);
+        let mut pub_pem = self.certs.get_first();
 
         // 2️⃣ 如果没有，就尝试 refresh 一次再取
         if pub_pem.is_none() {
             if let Err(e) = self.certs.refresh().await {
                 return Err(PayError::Crypto(format!("refresh certs failed: {}", e)));
             }
-            pub_pem = self.certs.get_by_serial(serial_no);
+            pub_pem = self.certs.get_first();
         }
         // 3️⃣ 还是没有，就报错
         let pub_pem = pub_pem.ok_or_else(|| {
-            PayError::Other(format!("platform cert {} not found after refresh", serial_no))
+            PayError::Other(format!("platform cert {} not found after refresh", "none"))
         })?;
         println!("pub_pem: {:?}", pub_pem);
         if pub_pem.is_empty() {

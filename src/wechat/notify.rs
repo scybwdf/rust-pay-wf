@@ -49,7 +49,7 @@ impl WechatNotify {
         let pub_pem = pub_pem.ok_or_else(|| {
             PayError::Other(format!("platform cert {} not found after refresh", serial))
         })?;
-        println!("pub_pem: {:?}", pub_pem);
+     
         if pub_pem.is_empty() {
             return Err(PayError::Other(
                 "wechat notify platform public key empty".to_string(),
