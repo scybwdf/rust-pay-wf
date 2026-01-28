@@ -402,7 +402,7 @@ impl WechatClient {
         } else {
             body.to_string()
         };
-        println!(
+        tracing::info!(
             "sign_and_post: method={}, url={}, body={}",
             method, url, body_str
         );
@@ -496,7 +496,7 @@ impl WechatClient {
             .to_string(); // 转换为 String，获取所有权
 
         // 2. 记录请求参数
-        println!(
+        tracing::info!(
             "添加分账接收方 - 类型: {}, 账号: {}",
             receiver_type, account
         );
@@ -604,15 +604,15 @@ impl WechatClient {
             .await
             .map_err(|e| PayError::Other(format!("Failed to get platform certificate: {}", e)))?;
 
-        println!("🔐 使用平台证书加密名称 - 序列号: {}", cert_sn);
-        println!("📝 原始名称: {}", name_str);
+        tracing::info!("🔐 使用平台证书加密名称 - 序列号: {}", cert_sn);
+        tracing::info!("📝 原始名称: {}", name_str);
 
         // 加密名称
         let encrypted_name =
             crate::utils::rsa_encrypt_oaep_with_public_key_pem(&public_key_pem, name_str)
                 .map_err(|e| PayError::Crypto(format!("Failed to encrypt receiver name: {}", e)))?;
 
-        println!("🔒 加密后名称(Base64): {}", encrypted_name);
+        tracing::info!("🔒 加密后名称(Base64): {}", encrypted_name);
 
         // 现在安全地修改 order
         if let Some(name_field) = order.get_mut("name") {
@@ -636,15 +636,11 @@ impl WechatClient {
         let (cert_sn,pub_pem) = certs.ok_or_else(|| {
             PayError::Other(format!("platform cert {} not found after refresh", "none"))
         })?;
-        println!("pub_pem: {:?}", pub_pem);
         if pub_pem.is_empty() {
             return Err(PayError::Other(
                 "wechat notify platform public key empty".to_string(),
             ));
         }
-        // 使用工具函数提取序列号和公钥
-       // let public_key_pem = extract_wechat_platform_cert_info(&pub_pem)
-       //     .map_err(|e| PayError::Other(format!("Failed to extract cert info: {}", e)))?;
 
         Ok((cert_sn, pub_pem))
     }
@@ -678,7 +674,6 @@ impl WechatClient {
             method, path_and_query, timestamp, nonce, body_str
         );
 
-        println!("待签名字符串: {}", sign_str);
 
         // 4. 使用商户私钥进行签名（注意：这里是签名，不是加密）
         let signature = rsa_sign_sha256_pem(&self.cfg.private_key_pem, &sign_str)
@@ -713,13 +708,13 @@ impl WechatClient {
         // 8. 添加Wechatpay-Serial头（如果提供了证书序列号）
         if let Some(serial) = wechatpay_serial {
             request_builder = request_builder.header("Wechatpay-Serial", serial.clone());
-            println!("已设置Wechatpay-Serial头: {}", serial);
+            tracing::info!("已设置Wechatpay-Serial头: {}", serial);
         }
 
         // 9. 设置请求体（POST请求）
         if method == "POST" {
             request_builder = request_builder.body(body_str.clone());
-            println!("请求体: {}", body_str);
+            tracing::info!("请求体: {}", body_str);
         }
 
         // 10. 发送请求
@@ -734,7 +729,7 @@ impl WechatClient {
             .await
             .map_err(|e| PayError::Other(format!("Failed to read response: {}", e)))?;
 
-        println!("响应状态: {}, 响应体: {}", status_code, response_text);
+        tracing::info!("响应状态: {}, 响应体: {}", status_code, response_text);
 
         // 11. 处理响应
         if !status_code.is_success() {
