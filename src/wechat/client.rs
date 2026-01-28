@@ -623,16 +623,36 @@ impl WechatClient {
     }
 
     async fn get_platform_certificate_info(&self) -> Result<(String, String), PayError> {
-        let cert_pem = self
+    /*    let cert_pem = self
             .cfg
             .platform_public_key_pem
             .as_deref()
             .unwrap_or_default();
         if cert_pem.is_empty() {
             return Err(PayError::Other("platform_public_key_pem is empty".into()));
+        }*/
+        let serial_no = self.cfg.serial_no.as_str();
+        let mut pub_pem = self.certs.get_by_serial(serial_no);
+
+        // 2️⃣ 如果没有，就尝试 refresh 一次再取
+        if pub_pem.is_none() {
+            if let Err(e) = self.certs.refresh().await {
+                return Err(PayError::Crypto(format!("refresh certs failed: {}", e)));
+            }
+            pub_pem = self.certs.get_by_serial(serial_no);
+        }
+        // 3️⃣ 还是没有，就报错
+        let pub_pem = pub_pem.ok_or_else(|| {
+            PayError::Other(format!("platform cert {} not found after refresh", serial_no))
+        })?;
+        println!("pub_pem: {:?}", pub_pem);
+        if pub_pem.is_empty() {
+            return Err(PayError::Other(
+                "wechat notify platform public key empty".to_string(),
+            ));
         }
         // 使用工具函数提取序列号和公钥
-        let (cert_sn, public_key_pem) = extract_wechat_platform_cert_info(&cert_pem)
+        let (cert_sn, public_key_pem) = extract_wechat_platform_cert_info(&pub_pem)
             .map_err(|e| PayError::Other(format!("Failed to extract cert info: {}", e)))?;
 
         Ok((cert_sn, public_key_pem))
