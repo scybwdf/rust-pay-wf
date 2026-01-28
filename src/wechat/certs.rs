@@ -80,8 +80,12 @@ impl PlatformCerts {
         let m = self.map.lock().unwrap();
         m.get(serial).cloned()
     }
-    pub fn get_first(&self) -> Option<String> {
-        let m = self.map.lock().unwrap();
-        m.values().next().cloned()
+    // 获取第一个证书的公钥（键值对）
+    pub fn get_first_cert(&self) -> Option<(String, String)> {
+        let cert_map = self.map.lock().unwrap();
+        cert_map.iter()
+            .next()
+            .map(|(k, v)| (k.clone(), v.clone()))
     }
+
 }

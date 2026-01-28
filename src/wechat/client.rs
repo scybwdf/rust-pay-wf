@@ -623,17 +623,17 @@ impl WechatClient {
     }
 
     async fn get_platform_certificate_info(&self) -> Result<(String, String), PayError> {
-        let mut pub_pem = self.certs.get_first();
+        let mut certs = self.certs.get_first_cert();
 
         // 2️⃣ 如果没有，就尝试 refresh 一次再取
-        if pub_pem.is_none() {
+        if certs.is_none() {
             if let Err(e) = self.certs.refresh().await {
                 return Err(PayError::Crypto(format!("refresh certs failed: {}", e)));
             }
-            pub_pem = self.certs.get_first();
+            certs = self.certs.get_first_cert();
         }
         // 3️⃣ 还是没有，就报错
-        let pub_pem = pub_pem.ok_or_else(|| {
+        let (cert_sn,pub_pem) = certs.ok_or_else(|| {
             PayError::Other(format!("platform cert {} not found after refresh", "none"))
         })?;
         println!("pub_pem: {:?}", pub_pem);
@@ -643,9 +643,9 @@ impl WechatClient {
             ));
         }
         // 使用工具函数提取序列号和公钥
-        let (cert_sn, public_key_pem) = extract_wechat_platform_cert_info(&pub_pem)
+        let public_key_pem = extract_wechat_platform_cert_info(&pub_pem)
             .map_err(|e| PayError::Other(format!("Failed to extract cert info: {}", e)))?;
-
+        
         Ok((cert_sn, public_key_pem))
     }
 

@@ -290,12 +290,12 @@ pub fn extract_wechat_cert_serial_number(cert_pem: &str) -> anyhow::Result<Strin
 }
 
 /// 从微信支付平台证书中提取序列号和公钥
-pub fn extract_wechat_platform_cert_info(cert_pem: &str) -> anyhow::Result<(String, String)> {
+pub fn extract_wechat_platform_cert_info(cert_pem: &str) -> anyhow::Result<String> {
     // 1. 提取序列号
-    let cert_sn = extract_wechat_cert_serial_number(cert_pem)?;
+    //let cert_sn = extract_wechat_cert_serial_number(cert_pem)?;
 
     // 2. 提取公钥（使用您已有的函数）
     let public_key_pem = extract_pubkey_from_cert(cert_pem)?;
 
-    Ok((cert_sn, public_key_pem))
+    Ok(public_key_pem)
 }
