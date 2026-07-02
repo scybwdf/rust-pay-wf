@@ -1,7 +1,7 @@
 
 [package]
 name = "rust_pay_wf"
-version = "0.11.6"
+version = "0.11.7"
 edition = "2021"
 authors = ["felix <scybwf@qq.com>"]
 description = "Rust 微信、支付宝、银联支付SDK"  # 必须有 description
@@ -26,3 +26,9 @@ thiserror = "2.0.17"
 once_cell = "1.21"
 url = "2"
 tracing = "0.1"
+
+[features]
+# 静态编译 openssl 源码(openssl-src)，而非链接系统 openssl。
+# 用于 musl 等静态链接目标：系统 openssl 多为 glibc 编译，链接 musl 时会缺 fopen64
+# 等大文件符号导致链接失败；vendored 自带源码编译可根治。glibc 动态链接无需开启。
+vendored = ["openssl/vendored"]
